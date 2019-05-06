@@ -1,8 +1,8 @@
 # Cyclops
 
 ## Alerting
-Alerting is built into cyclops and currently supports Sentry (TODO add sentry URL)
-TODO Link to alerts/README.md
+Alerting is built into cyclops and currently supports [Sentry](https://sentry.io).
+Alerting guide can be found [here](alerts/README.md)
 
 ## Features
 - Plug and Play Middleware support
@@ -24,7 +24,7 @@ w.Header().Set("X-Frame-Options", "deny")
 w.Header().Set("Content-Type", "application/json")
 w.Header().Set("X-XSS-Protection", "1; mode=block")
 ```
-- TThe abopve headers can be overridden by passing the headers in your own handlers
+- The above headers can be overridden by passing the headers in your own handlers
 - Setting middleware is as easy as pie
 ```
 // Add middlewares to a route that you define
