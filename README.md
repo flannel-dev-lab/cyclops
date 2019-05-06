@@ -76,4 +76,3 @@ func main() {
 - Middleware support
 - Any case route paths
 - Panic handle Middlewares
-

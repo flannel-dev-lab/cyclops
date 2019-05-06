@@ -1,5 +1,7 @@
 package alerts
 
+import "github.com/getsentry/raven-go"
+
 // Configuring Sentry alerting system
 type Sentry struct {
 	DSN         string
@@ -8,12 +10,12 @@ type Sentry struct {
 }
 
 func (sentry Sentry) CaptureError(err error, message string) {
-	/*	if sentry.Enabled {
+	if sentry.Enabled {
 		raven.CaptureErrorAndWait(
 			err,
 			map[string]string{
 				"env":     sentry.Environment,
 				"message": message,
 			})
-	}*/
+	}
 }
