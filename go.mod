@@ -1,4 +1,4 @@
-module WebFramework
+module github.com/flannel-dev-lab/cyclops
 
 go 1.12
 
