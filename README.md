@@ -1,4 +1,5 @@
 # Cyclops
+[![Go Report Card](https://goreportcard.com/badge/github.com/flannel-dev-lab/cyclops)](https://goreportcard.com/report/github.com/flannel-dev-lab/cyclops)
 
 ## Alerting
 Alerting is built into cyclops and currently supports [Sentry](https://sentry.io).
