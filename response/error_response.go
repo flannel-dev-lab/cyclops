@@ -1,8 +1,8 @@
 package response
 
 import (
-	"WebFramework/alerts"
 	"encoding/json"
+	"github.com/flannel-dev-lab/cyclops/alerts"
 	"log"
 	"net/http"
 )
