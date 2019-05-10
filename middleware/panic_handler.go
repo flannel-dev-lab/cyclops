@@ -2,7 +2,9 @@ package middleware
 
 import (
 	"errors"
+	"log"
 	"net/http"
+	"runtime/debug"
 )
 
 func PanicHandler(h http.Handler) http.Handler {
@@ -20,10 +22,9 @@ func PanicHandler(h http.Handler) http.Handler {
 				default:
 					err = errors.New("unknown error")
 				}
+				log.Print(string(debug.Stack()))
 				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 				return
-				// TODO respond error
-				// middlewareService.respondFailure(http.StatusUnprocessableEntity, err, string(debug.Stack()), responseWriter)
 			}
 		}()
 		h.ServeHTTP(responseWriter, request)
