@@ -24,7 +24,6 @@ func (writer logWriter) Write(bytes []byte) (int, error) {
 	return fmt.Printf("%s\n", string(bytes))
 }
 
-
 // Middleware to log access logs
 func RequestLogger(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
