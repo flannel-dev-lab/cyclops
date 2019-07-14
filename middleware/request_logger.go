@@ -17,10 +17,13 @@ type LogObject struct {
 	Protocol      string `json:"protocol"`
 }
 
-func (logObject LogObject) Write(bytes []byte) (int, error) {
-	logData, _ := json.Marshal(logObject)
-	return fmt.Print(string(logData))
+type logWriter struct {
 }
+
+func (writer logWriter) Write(bytes []byte) (int, error) {
+	return fmt.Printf("%s\n", string(bytes))
+}
+
 
 // Middleware to log access logs
 func RequestLogger(h http.Handler) http.Handler {
@@ -34,9 +37,12 @@ func RequestLogger(h http.Handler) http.Handler {
 			Host:          request.Host,
 			Protocol:      request.Proto,
 		}
+		log.SetFlags(0)
+		log.SetOutput(new(logWriter))
 
-		log.SetOutput(logObject)
-		defer log.Println()
+		logData, _ := json.Marshal(logObject)
+
+		defer log.Println(fmt.Sprintf("%s\n", logData))
 		h.ServeHTTP(w, request)
 	})
 }
