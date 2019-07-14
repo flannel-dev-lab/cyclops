@@ -42,7 +42,7 @@ func RequestLogger(h http.Handler) http.Handler {
 
 		logData, _ := json.Marshal(logObject)
 
-		defer log.Println(fmt.Sprintf("%s\n", logData))
+		defer log.Println(fmt.Sprintf("%s", logData))
 		h.ServeHTTP(w, request)
 	})
 }
