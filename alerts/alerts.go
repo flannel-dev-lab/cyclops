@@ -1,7 +1,9 @@
+// Handles the alerting systems such as Sentry, etc
 package alerts
 
 import (
 	"errors"
+	sentry2 "github.com/flannel-dev-lab/cyclops/alerts/sentry"
 )
 
 // Interface to configure alerting system
@@ -14,7 +16,7 @@ type Alert interface {
 func InitiateAlerting(system, endpoint, environment string, enabled bool) (Alert, error) {
 	switch system {
 	case "sentry":
-		sentry := &Sentry{
+		sentry := &sentry2.Sentry{
 			DSN:         endpoint,
 			Environment: environment,
 			Enabled:     enabled,
