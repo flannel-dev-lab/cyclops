@@ -14,14 +14,18 @@ type Chain struct {
 	middlewareHandlers []Middlewares
 }
 
+// NewChain takes a variable number of middleware's and adds them to chain and returns a pointer to Chain
 func NewChain(middlewares ...Middlewares) *Chain {
 	return &Chain{middlewareHandlers: middlewares}
 }
 
+// Then will take in your handler that need to be executed with the requested path and chains all the middleware's that
+// are  specified in Chain, the note here is that middleware's are chained in the order they are specified,
+// so take care of adding middleware's in appropriate order
 func (chain *Chain) Then(handler http.Handler) http.Handler {
 	for _, middleware := range chain.middlewareHandlers {
 		handler = middleware(handler)
 	}
-	handler = SetHeaders(RequestLogger(PanicHandler(handler)))
+	handler = SetSecureHeaders(RequestLogger(PanicHandler(handler)))
 	return handler
 }

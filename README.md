@@ -2,80 +2,52 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/flannel-dev-lab/cyclops)](https://goreportcard.com/report/github.com/flannel-dev-lab/cyclops)
 [![Build Status](https://travis-ci.org/flannel-dev-lab/cyclops.svg?branch=master)](https://travis-ci.org/flannel-dev-lab/cyclops)
 
-## Alerting
-Alerting is built into cyclops and currently supports [Sentry](https://sentry.io).
-Alerting guide can be found [here](alerts/README.md)
+![GitHub Logo1](Gopher-logo.png)
+
+Hello, this is cyclops, I am a minimal web framework
 
 ## Features
 - Plug and Play Middleware support
 - Plug and Play Alerting support
+- Customized response messages
 
-## Middlewares
-
-### Panic Handler
-- Handles server crashes gracefully, Sends a 500 return code. Enabled automatically
-
-### Request Logger
-- Logs access requests. Enabled automatically
-- `2019/05/05 19:58:40 [::1]:58225 POST /hello localhost:8080 HTTP/1.1`
-
-### Set Response Headers
-- Sets default response headers. The following response headers are set  by default
-```
-w.Header().Set("X-Content-Type-Options", "nosniff")
-w.Header().Set("X-Frame-Options", "deny")
-w.Header().Set("Content-Type", "application/json")
-w.Header().Set("X-XSS-Protection", "1; mode=block")
-```
-- The above headers can be overridden by passing the headers in your own handlers
-- Setting middleware is as easy as pie
-```
-// Add middlewares to a route that you define
-routes["/hello"] = middleware.NewChain(middleware.SetHeaders).Then(http.HandlerFunc(Root))
-```
-- The method `NewChain()` will accept multiple middlewares  of the form `func(http.Handler) http.Handler`
+## Table of contents
+1. [Alerting](alerts/README.md)
+2. [Middleware](middleware/README.md)
 
 ## Usage
-```
+```go
 package main
 
 import (
-	"WebFramework/middleware"
-	"WebFramework/router"
 	"fmt"
-	"log"
+	"github.com/flannel-dev-lab/cyclops"
+	"github.com/flannel-dev-lab/cyclops/response"
+	"github.com/flannel-dev-lab/cyclops/router"
+	"github.com/flannel-dev-lab/cyclops/middleware"
 	"net/http"
 )
 
-func Root(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Root!\n")
-}
-
-
 func main() {
-	handler, server := router.InitializeServer(":8080")
 
 	routes := make(map[string]http.Handler)
+	routes["/hello"] = middleware.NewChain().Then(http.HandlerFunc(Hello))
+	routes["/bye"] = middleware.NewChain().Then(http.HandlerFunc(Bye))
 
-	routes["/hello"] = middleware.NewChain(middleware.RequestLogger, middleware.SetHeaders).Then(http.HandlerFunc(Root))
-	routes["/bye"] = middleware.NewChain(middleware.RequestLogger).Then(http.HandlerFunc(Root))
-
-
+	handler, server := router.InitializeServer(":8080")
 
 	router.RegisterRoutes(handler, routes)
 
-	if err := server.ListenAndServe(); err != http.ErrServerClosed {
-		// Error starting or closing listener:
-		log.Fatalf("HTTP server ListenAndServe: %v", err)
-	}
+	cyclops.StartServer(server)
 }
 
+func Hello(w http.ResponseWriter, r *http.Request) {
+	response.SuccessResponse(200, w, nil)
+}
+
+func Bye(w http.ResponseWriter, r *http.Request) {
+	response.SuccessResponse(200, w, nil)
+}
+
+
 ```
-
-## Testing
-`go test ./...`
-
-** FEATURES **
-- Middleware support
-- Any case route paths
-- Panic handle Middlewares

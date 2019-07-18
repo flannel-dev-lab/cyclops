@@ -7,6 +7,8 @@ import (
 	"runtime/debug"
 )
 
+// PanicHandler takes care of recovering from panic if any unforseen error occurs in the execution logic and makes sure
+// that the server does not stop
 func PanicHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(responseWriter http.ResponseWriter, request *http.Request) {
 		var err error
