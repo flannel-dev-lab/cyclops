@@ -27,7 +27,7 @@ func RequestLogger(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
 
 		logObject := LogObject{
-			Timestamp: time.Now().UTC().Format("2006-01-02T15:04:05.999Z"),
+			Timestamp:     time.Now().UTC().Format("2006-01-02T15:04:05.999Z"),
 			RemoteAddress: request.RemoteAddr,
 			Method:        request.Method,
 			Path:          request.URL.Path,
@@ -40,4 +40,3 @@ func RequestLogger(h http.Handler) http.Handler {
 		h.ServeHTTP(w, request)
 	})
 }
-

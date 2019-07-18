@@ -8,6 +8,7 @@ Alerting guide can be found [here](alerts/README.md)
 
 ## Features
 - Plug and Play Middleware support
+- Plug and Play Alerting support
 
 ## Middlewares
 
