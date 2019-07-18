@@ -10,5 +10,4 @@ func StartServer(server *http.Server) {
 		// Error starting or closing listener:
 		log.Fatalf("HTTP server ListenAndServe: %v", err)
 	}
-	// TODO Graceful shutdown
 }
