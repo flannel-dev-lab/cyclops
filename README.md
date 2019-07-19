@@ -1,4 +1,4 @@
-<p align="center">![GitHub Logo1](Gopher-logo.png)</p>
+<p align="center"><img src="![GitHub Logo1](Gopher-logo.png)" /></p>
 <p align="center">
 Hello, this is cyclops, I am a minimal web framework
 [![Go Report Card](https://goreportcard.com/badge/github.com/flannel-dev-lab/cyclops)](https://goreportcard.com/report/github.com/flannel-dev-lab/cyclops)
