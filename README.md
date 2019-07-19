@@ -1,12 +1,9 @@
-<p align="center"><img src="https://github.com/flannel-dev-lab/cyclops/edit/master/Gopher-logo.png" width="400" /></p>
-<p align="center">
-Hello, this is cyclops, I am a minimal web framework
+# Cyclops
 [![Go Report Card](https://goreportcard.com/badge/github.com/flannel-dev-lab/cyclops)](https://goreportcard.com/report/github.com/flannel-dev-lab/cyclops)
 [![Build Status](https://travis-ci.org/flannel-dev-lab/cyclops.svg?branch=master)](https://travis-ci.org/flannel-dev-lab/cyclops)
 [![Go Doc](https://godoc.org/github.com/flannel-dev-lab/cyclops?status.svg)](https://godoc.org/github.com/flannel-dev-lab/cyclops)
-</p>
 
-# Cyclops
+![GitHub Logo1](Gopher-logo.png)
 
 ## Features
 - Plug and Play Middleware support
