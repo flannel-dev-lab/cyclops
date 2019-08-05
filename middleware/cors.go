@@ -16,17 +16,14 @@ type CORS struct {
 	// omit this header entirely (rather than setting its value to false).
 	AllowedCredentials bool
 
-	// TODO Convert this to space seperated strings
 	// AllowedHeaders is used in response to a pre-flight request which includes the Access-Control-Request-Headers
 	// to indicate which HTTP headers can be used during the actual request.
 	AllowedHeaders []string
 
-	// TODO Convert this to space seperated strings
 	// AllowedMethods is a list of methods the client is allowed to use with
 	// cross-domain requests. Default value is simple methods (HEAD, GET and POST).
 	AllowedMethods []string
 
-	// TODO Convert this to space seperated strings
 	// ExposedHeaders indicates which headers can be exposed as part of the response by listing their names.
 	ExposedHeaders []string
 
@@ -37,7 +34,7 @@ type CORS struct {
 }
 
 // CORSHandler handles the simple and pre-flight requests
-func (cors *CORS) CORSHandler(h http.Handler) http.Handler {
+func (cors CORS) CORSHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
 		if request.Method == http.MethodOptions {
 			// Handling pre-flight requests
@@ -53,7 +50,7 @@ func (cors *CORS) CORSHandler(h http.Handler) http.Handler {
 }
 
 // handleSimple handles the simple requests
-func (cors *CORS) handleSimple(w http.ResponseWriter, request *http.Request) {
+func (cors CORS) handleSimple(w http.ResponseWriter, request *http.Request) {
 	if cors.AllowedOrigin != "" {
 		w.Header().Set("Access-Control-Allow-Origin", cors.AllowedOrigin)
 	}
@@ -84,7 +81,7 @@ func (cors *CORS) handleSimple(w http.ResponseWriter, request *http.Request) {
 }
 
 // handlePreflight handles the pre-flight requests
-func (cors *CORS) handlePreflight(w http.ResponseWriter, request *http.Request) {
+func (cors CORS) handlePreflight(w http.ResponseWriter, request *http.Request) {
 	if cors.AllowedOrigin != "" {
 		w.Header().Set("Access-Control-Allow-Origin", cors.AllowedOrigin)
 	}
