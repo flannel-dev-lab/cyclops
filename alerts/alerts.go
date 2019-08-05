@@ -1,4 +1,4 @@
-// Handles the alerting systems such as Sentry, etc
+// alerts handles the alerting systems such as Sentry, etc
 package alerts
 
 // Interface to configure alerting system
