@@ -10,4 +10,6 @@ func StartServer(server *http.Server) {
 		// Error starting or closing listener:
 		log.Fatalf("HTTP server ListenAndServe: %v", err)
 	}
+
+	http.ListenAndServeTLS(":443", "server.crt", "server.key", nil)
 }

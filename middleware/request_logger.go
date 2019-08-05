@@ -11,19 +11,19 @@ import (
 // LogObject contains keys for the logs
 type LogObject struct {
 	// Current timestamp of request
-	Timestamp     string `json:"timestamp"`
+	Timestamp string `json:"timestamp"`
 	// RemoteAddress contains the IP of the server/ the IP address of the proxy
 	RemoteAddress string `json:"remote_address"`
 	// TrueIP contains the IP of the original requester
 	TrueIP string `json:"true_ip"`
 	// Method contains the http method requested
-	Method        string `json:"method"`
+	Method string `json:"method"`
 	// Path contains the http path requested
-	Path          string `json:"path"`
+	Path string `json:"path"`
 	// Host contains the IP of host
-	Host          string `json:"host"`
+	Host string `json:"host"`
 	// Protocol contains http version
-	Protocol      string `json:"protocol"`
+	Protocol string `json:"protocol"`
 }
 
 // logWriter struct that implements Write for logger

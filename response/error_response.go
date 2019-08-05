@@ -17,13 +17,13 @@ type Error struct {
 // ErrorLogger contains fields to print error log to stdout
 type ErrorLogger struct {
 	// Current timestamp of request
-	Timestamp   string `json:"timestamp"`
+	Timestamp string `json:"timestamp"`
 	// Error in string format
-	Error       string `json:"error"`
+	Error string `json:"error"`
 	// Response status code
-	StatusCode  int    `json:"status_code"`
+	StatusCode int `json:"status_code"`
 	// Tells if an alert is sent or not
-	AlertStatus bool   `json:"alert_status"`
+	AlertStatus bool `json:"alert_status"`
 }
 
 // ErrorResponse handles the logging and structuring of sending error to the user
