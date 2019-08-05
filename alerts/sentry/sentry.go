@@ -1,9 +1,9 @@
-// Sentry alerting system
+// sentry alerting system
 package sentry
 
 import "github.com/getsentry/raven-go"
 
-// Struct to hold sentry environment variables
+// Sentry struct to hold sentry variables
 type Sentry struct {
 	// URL for sentry
 	DSN string
@@ -25,7 +25,7 @@ func (sentry Sentry) CaptureError(err error, message string) {
 	}
 }
 
-// Initializes the raven DSN
+// Bootstrap initializes the raven DSN
 func (sentry Sentry) Bootstrap() error {
 	return raven.SetDSN(sentry.DSN)
 }
