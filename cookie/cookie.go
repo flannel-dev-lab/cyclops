@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+
+
 // CyclopsCookie is an object to hold cookie info
 type CyclopsCookie struct {
 	// Name of cookie
@@ -32,13 +34,15 @@ type CyclopsCookie struct {
 
 // SetCookie Sets a cookie to the responseWriter
 func (cyclopsCookie CyclopsCookie) SetCookie(w http.ResponseWriter) {
-
 	cookie := &http.Cookie{}
 	cookie.Name = cyclopsCookie.Name
 	cookie.Value = cyclopsCookie.Value
-	cookie.Path = cyclopsCookie.Path
+	if cyclopsCookie.Path == "" {
+		cookie.Path = "/"
+	} else {
+		cookie.Path = cyclopsCookie.Path
+	}
 	cookie.Domain = cyclopsCookie.Domain
-
 	cookie.Secure = cyclopsCookie.Secure
 	cookie.HttpOnly = cyclopsCookie.HttpOnly
 
