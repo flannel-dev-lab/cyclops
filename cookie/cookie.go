@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-
+const DEFAULT_EXPIRY = 3600
 
 // CyclopsCookie is an object to hold cookie info
 type CyclopsCookie struct {
@@ -46,7 +46,11 @@ func (cyclopsCookie CyclopsCookie) SetCookie(w http.ResponseWriter) {
 	cookie.Secure = cyclopsCookie.Secure
 	cookie.HttpOnly = cyclopsCookie.HttpOnly
 
-	cookie.Expires = time.Now().Add(cyclopsCookie.Expires * time.Second)
+	if cyclopsCookie.Expires == 0 {
+		cookie.Expires = time.Now().Add(DEFAULT_EXPIRY * time.Second)
+	} else {
+		cookie.Expires = time.Now().Add(cyclopsCookie.Expires * time.Second)
+	}
 
 	if cyclopsCookie.StrictSameSite {
 		cookie.SameSite = http.SameSiteStrictMode
