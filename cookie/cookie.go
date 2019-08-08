@@ -15,7 +15,7 @@ type CyclopsCookie struct {
 	Value string
 	// The Domain and Path attributes define the scope of the cookie. They essentially tell the browser what website
 	// the cookie belongs to
-	Path string
+	Path   string
 	Domain string
 	// Secure attribute is meant to keep cookie communication limited to encrypted transmission, directing browsers
 	// to use cookies only via secure/encrypted connections
@@ -60,6 +60,6 @@ func (cyclopsCookie CyclopsCookie) GetCookie(r *http.Request, key string) (*http
 }
 
 // GetAll returns array of cookies
-func (cyclopsCookie CyclopsCookie) GetAll(r *http.Request) []*http.Cookie{
+func (cyclopsCookie CyclopsCookie) GetAll(r *http.Request) []*http.Cookie {
 	return r.Cookies()
 }

@@ -24,6 +24,32 @@ type DefaultHeaders struct {
 	LastModified string
 }
 
+type SecureHeaders struct {
+	// Sets the X-XSS-Protection Header. Valid values are https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-XSS-Protection
+	// Default is 1; mode=block
+	XSSProtection string
+	// ContentTypeOptions provides protection against overriding Content-Type
+	// header by setting the `X-Content-Type-Options` header.
+	// Optional. Default value "nosniff".
+	ContentTypeOptions string
+	// Sets X-Frame-Options header that can be used to indicate whether or not a browser should be allowed to render a
+	// page in a <frame>, <iframe>, <embed> or <object>. Valid values are deny, sameorigin and allow-from uri. Default
+	// is deny
+	FrameOptions string
+	// Sets the `Strict-Transport-Security` header to indicate how
+	// long (in seconds) browsers should remember that this site is only to
+	// be accessed using HTTPS. Default is 0
+	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
+	// HSTSMaxAge int
+	// When enabled this rule applies to all of the site's subdomains as well to Strict-Transport-Security
+	// HSTSIncludeSubdomains bool
+
+	// ReferrerPolicy sets the `Referrer-Policy` header providing security against
+	// leaking potentially sensitive request paths to third parties.
+	// Optional. Default value "".  https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy
+	ReferrerPolicy string
+}
+
 // SetDefaultHeaders will set certain default headers specified by the user
 func (defaultHeaders *DefaultHeaders) SetDefaultHeaders(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
@@ -52,11 +78,28 @@ func (defaultHeaders *DefaultHeaders) SetDefaultHeaders(h http.Handler) http.Han
 }
 
 // SetSecureHeaders sets some default security headers
-func SetSecureHeaders(h http.Handler) http.Handler {
+func (secureHeaders SecureHeaders) SetSecureHeaders(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
-		w.Header().Set("X-Content-Type-Options", "nosniff")
-		w.Header().Set("X-Frame-Options", "deny")
-		w.Header().Set("X-XSS-Protection", "1; mode=block")
+		if secureHeaders.XSSProtection != "" {
+			w.Header().Set("X-XSS-Protection", secureHeaders.XSSProtection)
+		} else {
+
+			w.Header().Set("X-XSS-Protection", "1; mode=block")
+		}
+
+		if secureHeaders.ContentTypeOptions != "" {
+			w.Header().Set("X-Content-Type-Options", secureHeaders.ContentTypeOptions)
+		} else {
+			w.Header().Set("X-Content-Type-Options", "nosniff")
+		}
+
+		if secureHeaders.FrameOptions != "" {
+			w.Header().Set("X-Frame-Options", secureHeaders.FrameOptions)
+		} else {
+			w.Header().Set("X-Frame-Options", "deny")
+		}
+
+		w.Header().Set("Referrer-Policy", secureHeaders.ReferrerPolicy)
 		h.ServeHTTP(w, request)
 	})
 }

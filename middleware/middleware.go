@@ -26,6 +26,6 @@ func (chain *Chain) Then(handler http.Handler) http.Handler {
 	for _, middleware := range chain.middlewareHandlers {
 		handler = middleware(handler)
 	}
-	handler = SetSecureHeaders(RequestLogger(PanicHandler(handler)))
+	handler = RequestLogger(PanicHandler(handler))
 	return handler
 }
