@@ -15,7 +15,7 @@ func dial(network, address string) (redis.Conn, error) {
 	return redis.Dial(network, address)
 }
 
-func (redisSessionStore RedisSessionStore) New(network, address string) error {
+func (redisSessionStore *RedisSessionStore) New(network, address string) error {
 	redisSessionStore.Pool = &redis.Pool{
 		Dial: func() (redis.Conn, error) {
 			return dial(network, address)
