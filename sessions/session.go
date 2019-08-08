@@ -8,11 +8,11 @@ import (
 )
 
 type Session struct {
-	Store Store
+	Store  Store
 	Cookie cookie.CyclopsCookie
 }
 
-func (session *Session) generateSessionId() string{
+func (session *Session) generateSessionId() string {
 	uuidObj := uuid.New()
 	return uuidObj.String()
 }
@@ -35,7 +35,7 @@ func (session *Session) Set(w http.ResponseWriter, value map[string]interface{},
 }
 
 // Get Retrieves a particular session with key "session_id"
-func (session *Session) Get(r *http.Request) (data map[string]interface{}, err error){
+func (session *Session) Get(r *http.Request) (data map[string]interface{}, err error) {
 	cookieData, err := session.Cookie.GetCookie(r, "session_id")
 	if err != nil {
 		return data, err
@@ -45,7 +45,7 @@ func (session *Session) Get(r *http.Request) (data map[string]interface{}, err e
 }
 
 // Delete only deletes a particular session from database
-func (session *Session) Delete(r *http.Request, key string) (err error){
+func (session *Session) Delete(r *http.Request, key string) (err error) {
 	cookieData, err := session.Cookie.GetCookie(r, "session_id")
 	if err != nil {
 		return err
@@ -55,6 +55,6 @@ func (session *Session) Delete(r *http.Request, key string) (err error){
 }
 
 // Reset deletes all session values from the database
-func (session *Session) Reset(r *http.Request) (err error){
+func (session *Session) Reset(r *http.Request) (err error) {
 	return session.Store.Reset()
 }

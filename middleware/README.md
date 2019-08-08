@@ -18,7 +18,7 @@ import (
 func main() {
 
 	cors := middleware.CORS{
-		AllowedOrigin: "https://www.google.com",
+		AllowedOrigin: "https://www.admin.yombu.com",
 		AllowedHeaders: []string{"Content-Type", "referrer", "referrer-type"},
 		AllowedMethods: []string{"GET", "POST"},
 		AllowedCredentials: true,

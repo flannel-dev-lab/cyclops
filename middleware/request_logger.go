@@ -24,6 +24,8 @@ type LogObject struct {
 	Host string `json:"host"`
 	// Protocol contains http version
 	Protocol string `json:"protocol"`
+	// UserAgent
+	UserAgent string `json:"user_agent"`
 }
 
 // logWriter struct that implements Write for logger
@@ -32,7 +34,7 @@ type logWriter struct {
 
 // Write prints logs to stdout in JSON
 func (writer logWriter) Write(bytes []byte) (int, error) {
-	return fmt.Printf("%s\n", string(bytes))
+	return fmt.Printf("%s", string(bytes))
 }
 
 // RequestLogger intercepts logs from the requests and prints them to stdout
@@ -45,6 +47,7 @@ func RequestLogger(h http.Handler) http.Handler {
 			Path:          request.URL.Path,
 			Host:          request.Host,
 			Protocol:      request.Proto,
+			UserAgent: request.Header.Get(http.CanonicalHeaderKey("user-agent")),
 		}
 		log.SetFlags(0)
 		log.SetOutput(new(logWriter))
