@@ -53,7 +53,15 @@ func TestRequestContentTypeFilter_BadContentType(t *testing.T) {
 }
 
 func TestSetHeaders(t *testing.T) {
-	testServer := httptest.NewServer(SetSecureHeaders(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	headers := SecureHeaders{
+		XSSProtection:      "",
+		ContentTypeOptions: "",
+		FrameOptions:       "",
+		ReferrerPolicy:     "",
+	}
+
+
+	testServer := httptest.NewServer(headers.SetSecureHeaders(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Root!\n")
 	})))
 
