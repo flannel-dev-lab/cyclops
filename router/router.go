@@ -13,8 +13,8 @@ import (
 type Handle func(http.ResponseWriter, *http.Request, map[string]string)
 
 type Router struct {
-	tree       *node
-	staticPath string
+	tree          *node
+	staticPath    string
 	staticHandler http.Handler
 }
 
