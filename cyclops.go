@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-const banner  = `
+const banner = `
  ______ ______/ /__  ___  ___
 / __/ // / __/ / _ \/ _ \(_-<
 \__/\_, /\__/_/\___/ .__/___/
@@ -17,18 +17,19 @@ https://github.com/flannel-dev-lab/cyclops
 `
 
 // StartServer starts a simple http server
-func StartServer(server *http.Server) {
+func StartServer(address string, handler http.Handler) {
 	fmt.Print(banner)
-	if err := server.ListenAndServe(); err != http.ErrServerClosed {
+	if err := http.ListenAndServe(address, handler); err != http.ErrServerClosed {
 		// Error starting or closing listener:
 		log.Fatalf("HTTP server ListenAndServe: %v", err)
 	}
 }
 
 // StartTLSServer starts a TLS server with provided TLS cert and key files
-func StartTLSServer(server *http.Server, certFile, keyFile string) {
+func StartTLSServer(address string, handler http.Handler, certFile, keyFile string) {
 	fmt.Print(banner)
-	if err := server.ListenAndServeTLS(certFile, keyFile); err != http.ErrServerClosed {
+
+	if err := http.ListenAndServeTLS(address, certFile, keyFile, handler); err != http.ErrServerClosed {
 		// Error starting or closing listener:
 		log.Fatalf("HTTPS server ListenAndServe: %v", err)
 	}

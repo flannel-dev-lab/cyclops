@@ -32,25 +32,29 @@ import (
 )
 
 func main() {
+    routerObj := router.New()
 
-	routes := make(map[string]http.Handler)
-	routes["/hello"] = middleware.NewChain().Then(http.HandlerFunc(Hello))
-	routes["/bye"] = middleware.NewChain().Then(http.HandlerFunc(Bye))
+    routerObj.Get("/hello", middleware.NewChain().Then(Hello))
+    routerObj.Post("/bye", Bye)
 
-	handler, server := router.InitializeServer(":8080")
+    // Named parameters can be used as
+    routerObj.Get("/users/:name", middleware.NewChain().Then(PathParam))
 
-	router.RegisterRoutes(handler, routes)
-
-	cyclops.StartServer(server)
+    // static can be registered as
+    routerObj.RegisterStatic("{PATH TO STATIC DIRECTORY}", "/static/")
+    cyclops.StartServer(":8080", routerObj)
 }
 
-func Hello(w http.ResponseWriter, r *http.Request) {
+func PathParam(w http.ResponseWriter, r *http.Request, params map[string]string) {
+    fmt.Fprintf(w, "Hi %s", params["name"])
 	response.SuccessResponse(200, w, nil)
 }
 
-func Bye(w http.ResponseWriter, r *http.Request) {
+func Hello(w http.ResponseWriter, r *http.Request, params map[string]string) {
 	response.SuccessResponse(200, w, nil)
 }
 
-
+func Bye(w http.ResponseWriter, r *http.Request, params map[string]string) {
+	response.SuccessResponse(200, w, nil)
+}
 ```

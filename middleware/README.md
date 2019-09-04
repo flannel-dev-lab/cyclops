@@ -14,36 +14,34 @@ the function should take in `http.Handler` as a parameter and return `http.Handl
 ### Using CORS Middleware
 Cyclops supports CORS and can be used as explained below
 
-```go
+```
 package main
 
 import (
 	"fmt"
 	"github.com/flannel-dev-lab/cyclops"
 	"github.com/flannel-dev-lab/cyclops/middleware"
-	"github.com/flannel-dev-lab/cyclops/response"
 	"github.com/flannel-dev-lab/cyclops/router"
+	"html/template"
 	"net/http"
+	"time"
 )
 
 func main() {
 
-	cors := middleware.CORS{
-		AllowedOrigin: "https://www.admin.yombu.com",
-		AllowedHeaders: []string{"Content-Type", "referrer", "referrer-type"},
-		AllowedMethods: []string{"GET", "POST"},
-		AllowedCredentials: true,
-		ExposedHeaders: []string{"GET"},
-		MaxAge: 100,
-	}
+    cors := middleware.CORS{
+    		AllowedOrigin: "https://www.admin.yombu.com",
+    		AllowedHeaders: []string{"Content-Type", "referrer", "referrer-type"},
+    		AllowedMethods: []string{"GET", "POST"},
+    		AllowedCredentials: true,
+    		ExposedHeaders: []string{"GET"},
+    		MaxAge: 100,
+    	}
 
-	routes := make(map[string]http.Handler)
-	routes["/"] = middleware.NewChain(cors.CORSHandler).Then(http.HandlerFunc(Login))
+	routerObj := router.New()
+	routerObj.Get("/", middleware.NewChain(cors.CORSHandler).Then(Login))
 
-	handler, server := router.InitializeHTTPServer(":8080")
-
-	router.RegisterRoutes(handler, routes)
-	cyclops.StartServer(server)
+	cyclops.StartServer(":8080", routerObj)
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -52,8 +50,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 ```
 
-###  Setting Default Headers with every request
-- 
+### Setting Default Headers with every request
 ```
 package main
 
@@ -72,13 +69,10 @@ func main() {
         ContentType: "application/json",
 	}
 
-	routes := make(map[string]http.Handler)
-	routes["/"] = middleware.NewChain(defaultHeaders.DefaultHeaders).Then(http.HandlerFunc(Login))
-
-	handler, server := router.InitializeHTTPServer(":8080")
-
-	router.RegisterRoutes(handler, routes)
-	cyclops.StartServer(server)
+    routerObj := router.New()
+    routerObj.Get("/", middleware.NewChain(DefaultHeaders.DefaultHeaders).Then(Login))
+    
+    cyclops.StartServer(":8080", routerObj)
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -92,5 +86,5 @@ When we run the above code, the response header `Content-Type: application/json`
 If you want to use multiple middlewares for a request, cyclops allows you to do that as well. All you need to do is like
 below:
 ```
-routes["/"] = middleware.NewChain(defaultHeaders.DefaultHeaders, cors.CORSHandler).Then(http.HandlerFunc(Login))
+middleware.NewChain(defaultHeaders.DefaultHeaders, cors.CORSHandler).Then(http.HandlerFunc(Login))
 ```

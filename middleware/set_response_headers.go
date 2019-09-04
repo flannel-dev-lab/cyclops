@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"github.com/flannel-dev-lab/cyclops/router"
 	"net/http"
 	"strings"
 )
@@ -51,8 +52,8 @@ type SecureHeaders struct {
 }
 
 // SetDefaultHeaders will set certain default headers specified by the user
-func (defaultHeaders *DefaultHeaders) SetDefaultHeaders(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
+func (defaultHeaders *DefaultHeaders) SetDefaultHeaders(h router.Handle) router.Handle {
+	return func(w http.ResponseWriter, request *http.Request, params map[string]string) {
 		if defaultHeaders.CacheControl != "" {
 			w.Header().Set("Cache-Control", defaultHeaders.CacheControl)
 		}
@@ -72,14 +73,14 @@ func (defaultHeaders *DefaultHeaders) SetDefaultHeaders(h http.Handler) http.Han
 		if defaultHeaders.LastModified != "" {
 			w.Header().Set("Last-Modified", defaultHeaders.LastModified)
 		}
-		h.ServeHTTP(w, request)
+		h(w, request, params)
 
-	})
+	}
 }
 
 // SetSecureHeaders sets some default security headers
-func (secureHeaders SecureHeaders) SetSecureHeaders(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
+func (secureHeaders SecureHeaders) SetSecureHeaders(h router.Handle) router.Handle {
+	return func(w http.ResponseWriter, request *http.Request, params map[string]string) {
 		if secureHeaders.XSSProtection != "" {
 			w.Header().Set("X-XSS-Protection", secureHeaders.XSSProtection)
 		} else {
@@ -100,6 +101,6 @@ func (secureHeaders SecureHeaders) SetSecureHeaders(h http.Handler) http.Handler
 		}
 
 		w.Header().Set("Referrer-Policy", secureHeaders.ReferrerPolicy)
-		h.ServeHTTP(w, request)
-	})
+		h(w, request, params)
+	}
 }
