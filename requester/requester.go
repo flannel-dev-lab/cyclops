@@ -31,8 +31,8 @@ func Get(url string, headers map[string]string, queryParams map[string]string) (
 	return response, err
 }
 
-// POST will perform a POST request on the url with the headers, query params and request body
-func POST(url string, headers map[string]string, queryParams map[string]string, requestBody map[string]string) (response *http.Response, err error) {
+// Post will perform a POST request on the url with the headers, query params and request body
+func Post(url string, headers map[string]string, queryParams map[string]string, requestBody map[string]string) (response *http.Response, err error) {
 	data, err := json.Marshal(requestBody)
 	if err != nil {
 		return nil, err
@@ -59,7 +59,6 @@ func POST(url string, headers map[string]string, queryParams map[string]string, 
 	response, err = client.Do(request)
 	return response, err
 }
-
 
 // Delete will perform a Delete request on the url with the headers, query params and request body
 func Delete(url string, headers map[string]string, queryParams map[string]string, requestBody map[string]string) (response *http.Response, err error) {
