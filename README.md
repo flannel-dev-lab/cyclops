@@ -13,6 +13,10 @@
 ## Table of contents
 1. [Alerting](alerts/README.md)
 2. [Middleware](middleware/README.md)
+3. [Cookies](cookie/README.md)
+4. [Handling Inputs](input/README.md)
+5. [Handling HTTP Requests](requester/README.md)
+6. [Handling Sessions](sessions/README.md)
 
 ## Usage
 ```go

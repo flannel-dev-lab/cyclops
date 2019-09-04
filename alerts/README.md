@@ -26,17 +26,17 @@ type Sentry struct {
 }
 
 func main() {
-	sentry2 := sentry.Sentry{
+	sentryAlerts := sentry.Sentry{
 		DSN: "",
 		Environment: "dev",
 		Enabled: true,
 	}
 
-	sentry2.Bootstrap()
+	sentryAlerts.Bootstrap()
 	
 	var alert alerts.Alert
 
-	alert = sentry2
+	alert = sentryAlerts
 	alert.CaptureError(errors.New("test"), "test")
 }
 

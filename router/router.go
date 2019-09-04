@@ -2,70 +2,69 @@ package router
 
 import (
 	"net/http"
+	"path/filepath"
 	"strings"
 )
 
-// RegisterRoutes takes in a handler and attaches all the routes to the handler
-func RegisterRoutes(handler *http.ServeMux, routes map[string]http.Handler) {
-	for k, v := range routes {
-		handler.Handle(k, v)
-	}
+// Handle type is an adapter to allow the use of
+// ordinary functions as HTTP handlers. If f is a function
+// with the appropriate signature, Handle(f) is a
+// Handler that calls f.
+type Handle func(http.ResponseWriter, *http.Request, map[string]string)
+
+type Router struct {
+	tree        *node
 }
 
-// FileSystem custom file system handler
-type FileSystem struct {
-	fs http.FileSystem
+func New() *Router {
+	node := node{component: "/", isNamedParam: false, methods: make(map[string]Handle)}
+	return &Router{tree: &node}
 }
 
-// Open opens file
-func (fs FileSystem) Open(path string) (http.File, error) {
-	f, err := fs.fs.Open(path)
-	if err != nil {
-		return nil, err
-	}
-
-	s, err := f.Stat()
-	if err != nil {
-		return nil, err
-	}
-
-	if s.IsDir() {
-		index := strings.TrimSuffix(path, "/") + "/index.html"
-		if _, err := fs.fs.Open(index); err != nil {
-			return nil, err
-		}
-	}
-
-	return f, nil
+func (router *Router) Get(path string, handle Handle) {
+	router.tree.addNode(http.MethodGet, path, handle)
 }
 
-// RegisterStatic helps in handling static assets. directoryPath takes in the path to your static assets, servePath
-// will take in a path to handler on which the files should be served.
-func RegisterStatic(handler *http.ServeMux, directoryPath, servePath string) {
-	fs := http.FileServer(FileSystem{http.Dir(directoryPath)})
-
-	handler.Handle(servePath, http.StripPrefix(strings.TrimRight(servePath, "/"), fs))
+func (router *Router) Post(path string, handle Handle) {
+	router.tree.addNode(http.MethodPost, path, handle)
 }
 
-func InitializeServer(address string) (*http.ServeMux, *http.Server) {
-	handler := http.NewServeMux()
+func (router *Router) Put(path string, handle Handle) {
+	router.tree.addNode(http.MethodPut, path, handle)
+}
 
-	server := http.Server{
-		Addr:    address,
-		Handler: handler,
+func (router *Router) Patch(path string, handle Handle) {
+	router.tree.addNode(http.MethodPatch, path, handle)
+}
+
+func (router *Router) Delete(path string, handle Handle) {
+	router.tree.addNode(http.MethodDelete, path, handle)
+}
+
+func (router *Router) Head(path string, handle Handle) {
+	router.tree.addNode(http.MethodHead, path, handle)
+}
+
+func (router *Router) Trace(path string, handle Handle) {
+	router.tree.addNode(http.MethodTrace, path, handle)
+}
+
+func (router *Router) Options(path string, handle Handle) {
+	router.tree.addNode(http.MethodOptions, path, handle)
+}
+
+func (router *Router) Connect(path string, handle Handle) {
+	router.tree.addNode(http.MethodConnect, path, handle)
+}
+
+func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	params := make(map[string]string)
+
+	node, _ := router.tree.searchTree(strings.Split(filepath.Clean(r.URL.Path), "/")[1:], params)
+	if handler := node.methods[r.Method]; handler != nil {
+		handler(w, r, params)
+	} else {
+		http.NotFound(w, r)
+		return
 	}
-	return handler, &server
 }
-
-// InitializeHTTPServer binds a HTTP server on a given address and port
-func InitializeHTTPServer(address string) (*http.ServeMux, *http.Server) {
-	handler := http.NewServeMux()
-
-	server := http.Server{
-		Addr:    address,
-		Handler: handler,
-	}
-	return handler, &server
-}
-
-// TODO add TLS support
