@@ -72,7 +72,7 @@ func (router *Router) RegisterStatic(directoryPath, servePath string) {
 func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	params := make(map[string]string)
 
-	if strings.Contains(r.URL.Path, router.staticPath) {
+	if strings.Contains(r.URL.Path, router.staticPath) && router.staticPath != "" {
 		router.staticHandler.ServeHTTP(w, r)
 	} else {
 		node, _ := router.tree.searchTree(strings.Split(filepath.Clean(r.URL.Path), "/")[1:], params)
