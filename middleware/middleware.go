@@ -5,12 +5,12 @@
 package middleware
 
 import (
-	"github.com/flannel-dev-lab/cyclops/router"
+	"net/http"
 )
 
 // A type signature for middleware
 //type Middlewares func(http.Handler) http.Handler
-type Middlewares func(router.Handle) router.Handle
+type Middlewares func(http.HandlerFunc) http.HandlerFunc
 
 // Chain contains a slice of middleware for the request
 type Chain struct {
@@ -25,7 +25,7 @@ func NewChain(middlewares ...Middlewares) *Chain {
 // Then will take in your handler that need to be executed with the requested path and chains all the middleware's that
 // are  specified in Chain, the note here is that middleware's are chained in the order they are specified,
 // so take care of adding middleware's in appropriate order
-func (chain *Chain) Then(handler router.Handle) router.Handle {
+func (chain *Chain) Then(handler http.HandlerFunc) http.HandlerFunc {
 	for _, middleware := range chain.middlewareHandlers {
 		handler = middleware(handler)
 	}

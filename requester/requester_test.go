@@ -22,7 +22,6 @@ func TestGet(t *testing.T) {
 	}
 }
 
-
 func TestPost(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Root!\n")
