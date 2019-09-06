@@ -4,61 +4,66 @@ import (
 	"strings"
 )
 
+// node - a node structure for nodes within the tree
 type node struct {
-	children     []*node
-	component    string
-	isNamedParam bool
-	methods      map[string]Handle
+	typ      ntype
+	label    byte
+	prefix   string
+	parent   *node
+	children children
+	resource *resource
+	pnames   pNames
 }
 
-func (n *node) addNode(method, path string, handler Handle) {
-	if path[0] != '/' {
-		panic("Path has to start with a /.")
+// pNames - map of method to pnames, as different methods can have different pnames
+type pNames map[string][]string
+
+// newNode - create a new router tree node
+func newNode(t ntype, pre string, p *node, c children, h *resource, pnames pNames) *node {
+	n := &node{
+		typ:      t,
+		label:    pre[0],
+		prefix:   pre,
+		parent:   p,
+		children: c,
+		// create a resource method to handler map for this node
+		resource: h,
+		pnames:   pnames,
 	}
-
-	components := strings.Split(path, "/")[1:]
-
-	for componentCount := len(components); componentCount >= 1; componentCount-- {
-		aNode, component := n.searchTree(components, nil)
-
-		if aNode.component == component && componentCount == 1 { // update an existing node.
-			aNode.methods[method] = handler
-			return
-		}
-
-		newNode := node{component: component, isNamedParam: false, methods: make(map[string]Handle)}
-
-		if len(component) > 0 && component[0] == ':' { // check if it is a named param.
-			newNode.isNamedParam = true
-		}
-
-		if componentCount == 1 {
-			newNode.methods[method] = handler
-		}
-
-		aNode.children = append(aNode.children, &newNode)
-	}
-
+	return n
 }
 
-func (n *node) searchTree(components []string, params map[string]string) (*node, string) {
-	component := components[0]
+// addChild - Add a child node to this node
+func (n *node) addChild(c *node) {
+	n.children = append(n.children, c)
+}
 
-	if len(n.children) > 0 { // no children, then bail out.
-		for _, child := range n.children {
-			if component == child.component || child.isNamedParam {
-				if child.isNamedParam && params != nil {
-					params[child.component[1:]] = component
-				}
-				next := components[1:]
-				if len(next) > 0 {
-					return child.searchTree(next, params)
-				} else {
-					return child, component
-				}
-			}
+// findChild - find a child node of this node
+func (n *node) findChild(search string, t ntype) *node {
+	for _, c := range n.children {
+		if strings.HasPrefix(search, c.prefix) && c.typ == t {
+			return c
 		}
 	}
+	return nil
+}
 
-	return n, component
+// findChildWithLabel - find a child with a matching label, label being the first byte in the prefix
+func (n *node) findChildWithLabel(l byte) *node {
+	for _, c := range n.children {
+		if c.label == l {
+			return c
+		}
+	}
+	return nil
+}
+
+// findChildWithType - find a child with a matching type
+func (n *node) findChildWithType(t ntype) *node {
+	for _, c := range n.children {
+		if c.typ == t {
+			return c
+		}
+	}
+	return nil
 }

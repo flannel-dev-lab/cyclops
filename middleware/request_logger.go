@@ -3,7 +3,6 @@ package middleware
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/flannel-dev-lab/cyclops/router"
 	"log"
 	"net/http"
 	"time"
@@ -39,8 +38,8 @@ func (writer logWriter) Write(bytes []byte) (int, error) {
 }
 
 // RequestLogger intercepts logs from the requests and prints them to stdout
-func RequestLogger(h router.Handle) router.Handle {
-	return func(writer http.ResponseWriter, request *http.Request, params map[string]string) {
+func RequestLogger(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, request *http.Request) {
 		logObject := LogObject{
 			Timestamp:     time.Now().UTC().Format("2006-01-02T15:04:05.999Z"),
 			RemoteAddress: request.RemoteAddr,
@@ -56,7 +55,6 @@ func RequestLogger(h router.Handle) router.Handle {
 		logData, _ := json.Marshal(logObject)
 
 		defer log.Println(fmt.Sprintf("%s", logData))
-		h(writer, request, params)
+		h.ServeHTTP(w, request)
 	}
-
 }
