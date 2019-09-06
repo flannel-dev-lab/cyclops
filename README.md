@@ -45,12 +45,12 @@ func main() {
     cyclops.StartServer(":8080", routerObj)
 }
 
-func PathParam(w http.ResponseWriter, r *http.Request, params map[string]string) {
-    fmt.Fprintf(w, "Hi %s", params["name"])
+func PathParam(w http.ResponseWriter, r *http.Request) {
+    fmt.Fprintf(w, "Hi %s", cyclops.Param(r, "name"))
 	response.SuccessResponse(200, w, nil)
 }
 
-func Hello(w http.ResponseWriter, r *http.Request, params map[string]string) {
+func Hello(w http.ResponseWriter, r *http.Request) {
 	response.SuccessResponse(200, w, nil)
 }
 
@@ -58,3 +58,6 @@ func Bye(w http.ResponseWriter, r *http.Request, params map[string]string) {
 	response.SuccessResponse(200, w, nil)
 }
 ```
+
+## Credits
+- Router implementation is inspired and modified accordingly from [vestigo](https://github.com/husobee/vestigo)
