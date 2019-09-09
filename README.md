@@ -54,7 +54,7 @@ func Hello(w http.ResponseWriter, r *http.Request) {
 	response.SuccessResponse(200, w, nil)
 }
 
-func Bye(w http.ResponseWriter, r *http.Request, params map[string]string) {
+func Bye(w http.ResponseWriter, r *http.Request) {
 	response.SuccessResponse(200, w, nil)
 }
 ```
