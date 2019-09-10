@@ -112,24 +112,9 @@ func (r *Router) Trace(path string, handler http.HandlerFunc) {
 	r.Add(http.MethodTrace, path, handler)
 }
 
-// Handle - Helper method to add all HTTP Methods to router
-func (r *Router) Handle(path string, handler http.Handler) {
-	for k := range methods {
-		if k == http.MethodHead || k == http.MethodOptions || k == http.MethodTrace {
-			continue
-		}
-		r.Add(k, path, handler.ServeHTTP)
-	}
-}
-
-// HandleFunc - Helper method to add all HTTP Methods to router
-func (r *Router) HandleFunc(path string, handler http.HandlerFunc) {
-	for k := range methods {
-		if k == http.MethodHead || k == http.MethodOptions || k == http.MethodTrace {
-			continue
-		}
-		r.Add(k, path, handler.ServeHTTP)
-	}
+// Head - Helper method to add HTTP HEAD Method to router
+func (r *Router) Head(path string, handler http.HandlerFunc) {
+	r.Add(http.MethodHead, path, handler)
 }
 
 // Add - Add a method/handler combination to the router
