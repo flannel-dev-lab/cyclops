@@ -132,7 +132,7 @@ func (r *Router) add(method, path string, h http.HandlerFunc) {
 	pnames := make(pNames)
 	pnames[method] = []string{}
 	for i, l := 0, len(path); i < l; i++ {
-		if path[i] == ':' && path[i-1] == '/'{
+		if path[i] == ':'{
 			j := i + 1
 
 			r.insert(method, path[:i], nil, stype, nil)
