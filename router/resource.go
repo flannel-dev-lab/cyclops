@@ -112,6 +112,7 @@ func (h *resource) CopyTo(v *resource) {
 	v.Post = h.Post
 	v.Put = h.Put
 	v.Trace = h.Trace
+	v.Head = h.Head
 	v.allowedMethods = h.allowedMethods
 }
 
@@ -154,6 +155,10 @@ func (h *resource) Clean() {
 		h.addToAllowedMethods(http.MethodConnect)
 		hasOneMethod = true
 	}
+	if h.Head != nil {
+		h.addToAllowedMethods(http.MethodHead)
+		hasOneMethod = true
+	}
 	if hasOneMethod && AllowTrace {
 		h.addToAllowedMethods(http.MethodTrace)
 		h.Trace = traceHandler
@@ -185,6 +190,10 @@ func (h *resource) AddMethodHandler(method string, handler http.HandlerFunc) {
 			if uint16(firstChar)<<8|uint16(secondChar) == 0x504f {
 				h.addToAllowedMethods(method)
 				h.Post = handler
+			}
+			if uint16(firstChar)<<8|uint16(secondChar) == 0x4845 {
+				h.addToAllowedMethods(method)
+				h.Head = handler
 			}
 		} else if l == 5 {
 			if uint16(firstChar)<<8|uint16(secondChar) == 0x5452 {
