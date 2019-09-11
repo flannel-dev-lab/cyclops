@@ -119,6 +119,11 @@ func (r *Router) Head(path string, handler http.HandlerFunc) {
 
 // Add - Add a method/handler combination to the router
 func (r *Router) Add(method, path string, h http.HandlerFunc) {
+	for i := 0; i < len(path); i++ {
+		if path[i] == ':' && path[i-1] != '/' {
+			path = replaceAtIndex(path, '/', i)
+		}
+	}
 	r.add(method, path, h)
 }
 
@@ -143,6 +148,7 @@ func (r *Router) add(method, path string, h http.HandlerFunc) {
 				return
 			}
 			r.insert(method, path[:i], nil, ptype, pnames)
+
 		} else if path[i] == '*' {
 			r.insert(method, path[:i], nil, stype, nil)
 			pnames[method] = append(pnames[method], "_name")
@@ -162,13 +168,13 @@ func (r *Router) Find(req *http.Request) (h http.HandlerFunc) {
 
 func (r *Router) find(req *http.Request) (prefix string, h http.HandlerFunc) {
 	// get tree base node from the router
-	cn := r.root
+	rootNode := r.root
 
 	h = notFoundHandler
 
 	if !validMethod(req.Method) {
 		// if the method is completely invalid
-		h = methodNotAllowedHandler(cn.resource.allowedMethods)
+		h = methodNotAllowedHandler(rootNode.resource.allowedMethods)
 		return
 	}
 
@@ -179,13 +185,20 @@ func (r *Router) find(req *http.Request) (prefix string, h http.HandlerFunc) {
 		collectedPnames []string
 	)
 
+	if search != "" {
+		for i := 0; i < len(search); i++ {
+			if search[i] == ':' && search[i-1] != '/' {
+				search = replaceAtIndex(search, '/', i)
+			}
+		}
+	}
+
 	// Search order static > param > match-any
 	for {
-
 		if search == "" {
-			if cn.resource != nil {
+			if rootNode.resource != nil {
 				// Found route, check if method is applicable
-				handler, allowedMethods := cn.resource.GetMethodHandler(req.Method)
+				handler, allowedMethods := rootNode.resource.GetMethodHandler(req.Method)
 				if handler == nil {
 					if allowedMethods != "" {
 						// route is valid, but method is not allowed, 405
@@ -195,8 +208,8 @@ func (r *Router) find(req *http.Request) (prefix string, h http.HandlerFunc) {
 				}
 				h = handler
 				for i, v := range collectedPnames {
-					if len(cn.pnames[req.Method]) > i {
-						input.AddParam(req, cn.pnames[req.Method][i], v)
+					if len(rootNode.pnames[req.Method]) > i {
+						input.AddParam(req, rootNode.pnames[req.Method][i], v)
 					}
 				}
 
@@ -207,7 +220,7 @@ func (r *Router) find(req *http.Request) (prefix string, h http.HandlerFunc) {
 					if v != "" {
 						prefix += "/"
 						if v == ":" {
-							if pnames, ok := cn.pnames[req.Method]; ok {
+							if pnames, ok := rootNode.pnames[req.Method]; ok {
 								prefix += v + pnames[k]
 							}
 							k++
@@ -223,17 +236,17 @@ func (r *Router) find(req *http.Request) (prefix string, h http.HandlerFunc) {
 		pl := 0 // Prefix length
 		l := 0  // LCP length
 
-		if cn.label != ':' {
+		if rootNode.label != ':' {
 			sl := len(search)
-			pl = len(cn.prefix)
-			prefix += cn.prefix
+			pl = len(rootNode.prefix)
+			prefix += rootNode.prefix
 
 			// LCP
 			max := pl
 			if sl < max {
 				max = sl
 			}
-			for ; l < max && search[l] == cn.prefix[l]; l++ {
+			for ; l < max && search[l] == rootNode.prefix[l]; l++ {
 			}
 		}
 
@@ -241,13 +254,13 @@ func (r *Router) find(req *http.Request) (prefix string, h http.HandlerFunc) {
 			// Continue search
 			search = search[l:]
 
-			if search == "" && cn != nil && cn.parent != nil && cn.resource.allowedMethods == "" {
-				parent := cn.parent
-				search = cn.prefix
+			if search == "" && rootNode != nil && rootNode.parent != nil && rootNode.resource.allowedMethods == "" {
+				parent := rootNode.parent
+				search = rootNode.prefix
 				for parent != nil {
 					if sib := parent.findChildWithLabel('*'); sib != nil {
 						search = parent.prefix + search
-						cn = parent
+						rootNode= parent
 						goto MatchAny
 					}
 					parent = parent.parent
@@ -258,7 +271,7 @@ func (r *Router) find(req *http.Request) (prefix string, h http.HandlerFunc) {
 
 		if search == "" {
 			// TODO: Needs improvement
-			if cn.findChildWithType(mtype) == nil {
+			if rootNode.findChildWithType(mtype) == nil {
 				continue
 			}
 			// Empty value
@@ -266,17 +279,16 @@ func (r *Router) find(req *http.Request) (prefix string, h http.HandlerFunc) {
 		}
 
 		// Static node
-		c = cn.findChild(search, stype)
+		c = rootNode.findChild(search, stype)
 		if c != nil {
-			cn = c
+			rootNode = c
 			continue
 		}
 		// Param node
 	Param:
-
-		c = cn.findChildWithType(ptype)
+		c = rootNode.findChildWithType(ptype)
 		if c != nil {
-			cn = c
+			rootNode = c
 
 			i, l := 0, len(search)
 			for ; i < l && search[i] != '/'; i++ {
@@ -286,8 +298,7 @@ func (r *Router) find(req *http.Request) (prefix string, h http.HandlerFunc) {
 			prefix += ":"
 			n++
 			search = search[i:]
-
-			if len(cn.children) == 0 && len(search) != 0 {
+			if len(rootNode.children) == 0 && len(search) != 0 {
 				return
 			}
 
@@ -296,27 +307,28 @@ func (r *Router) find(req *http.Request) (prefix string, h http.HandlerFunc) {
 
 		// Match-any node
 	MatchAny:
-		//		c = cn.getChild()
-		c = cn.findChildWithType(mtype)
+		//		c = rootNode.getChild()
+		c = rootNode.findChildWithType(mtype)
 		if c != nil {
-			cn = c
+			rootNode = c
 			collectedPnames = append(collectedPnames, search)
 			search = "" // End search
 			continue
 		}
+
 		// last ditch effort to match on wildcard (issue #8)
 		var tmpsearch = search
 		for {
-			if cn != nil && cn.parent != nil && cn.prefix != ":" {
-				tmpsearch = cn.prefix + tmpsearch
-				cn = cn.parent
-				if cn.prefix == "/" {
-					var sib = cn.findChildWithLabel(':')
+			if rootNode != nil && rootNode.parent != nil && rootNode.prefix != ":" {
+				tmpsearch = rootNode.prefix + tmpsearch
+				rootNode = rootNode.parent
+				if rootNode.prefix == "/" {
+					var sib = rootNode.findChildWithLabel(':')
 					if sib != nil {
 						search = tmpsearch
 						goto Param
 					}
-					if sib := cn.findChildWithLabel('*'); sib != nil {
+					if sib := rootNode.findChildWithLabel('*'); sib != nil {
 						search = tmpsearch
 						goto MatchAny
 					}
@@ -335,7 +347,7 @@ func (r *Router) find(req *http.Request) (prefix string, h http.HandlerFunc) {
 func (r *Router) insert(method, path string, h http.HandlerFunc, t ntype, pnames pNames) {
 	// Adjust max param
 
-	cn := r.root
+	rootNode := r.root
 
 	if !validMethod(method) && method != "CORS" {
 		panic("invalid method")
@@ -344,7 +356,7 @@ func (r *Router) insert(method, path string, h http.HandlerFunc, t ntype, pnames
 
 	for {
 		sl := len(search)
-		pl := len(cn.prefix)
+		pl := len(rootNode.prefix)
 		l := 0
 
 		// LCP
@@ -352,75 +364,75 @@ func (r *Router) insert(method, path string, h http.HandlerFunc, t ntype, pnames
 		if sl < max {
 			max = sl
 		}
-		for ; l < max && search[l] == cn.prefix[l]; l++ {
+		for ; l < max && search[l] == rootNode.prefix[l]; l++ {
 		}
 
-		if cn.pnames == nil {
-			cn.pnames = make(pNames)
+		if rootNode.pnames == nil {
+			rootNode.pnames = make(pNames)
 		}
 
 		if l == 0 {
 			// At root node
-			cn.label = search[0]
-			cn.prefix = search
+			rootNode.label = search[0]
+			rootNode.prefix = search
 			if h != nil {
-				cn.typ = t
-				cn.resource = newResource()
+				rootNode.typ = t
+				rootNode.resource = newResource()
 				if method != "CORS" {
-					cn.resource.AddMethodHandler(method, h)
+					rootNode.resource.AddMethodHandler(method, h)
 				}
 				if method == "GET" {
-					cn.pnames["HEAD"] = pnames[method]
+					rootNode.pnames["HEAD"] = pnames[method]
 				}
-				cn.pnames[method] = pnames[method]
+				rootNode.pnames[method] = pnames[method]
 			}
 		} else if l < pl {
 			// Split node
 			nr := newResource()
-			cn.resource.CopyTo(nr)
+			rootNode.resource.CopyTo(nr)
 
-			n := newNode(cn.typ, cn.prefix[l:], cn, cn.children, nr, cn.pnames)
+			n := newNode(rootNode.typ, rootNode.prefix[l:], rootNode, rootNode.children, nr, rootNode.pnames)
 			for i := 0; i < len(n.children); i++ {
 				n.children[i].parent = n
 			}
 
 			// Reset parent node
-			cn.typ = stype
-			cn.label = cn.prefix[0]
-			cn.prefix = cn.prefix[:l]
-			cn.children = nil
-			cn.resource = newResource()
-			cn.pnames = make(pNames)
+			rootNode.typ = stype
+			rootNode.label = rootNode.prefix[0]
+			rootNode.prefix = rootNode.prefix[:l]
+			rootNode.children = nil
+			rootNode.resource = newResource()
+			rootNode.pnames = make(pNames)
 
-			cn.addChild(n)
+			rootNode.addChild(n)
 
 			if l == sl {
 				// At parent node
-				cn.typ = t
+				rootNode.typ = t
 
 				if method != "CORS" {
-					cn.resource.AddMethodHandler(method, h)
+					rootNode.resource.AddMethodHandler(method, h)
 				}
 				if method == "GET" {
-					cn.pnames["HEAD"] = pnames[method]
+					rootNode.pnames["HEAD"] = pnames[method]
 				}
-				cn.pnames[method] = pnames[method]
+				rootNode.pnames[method] = pnames[method]
 			} else {
 				// Create child node
 				nr := newResource()
 				if method != "CORS" {
 					nr.AddMethodHandler(method, h)
 				}
-				cn.pnames[method] = pnames[method]
-				n = newNode(t, search[l:], cn, nil, nr, cn.pnames)
-				cn.addChild(n)
+				rootNode.pnames[method] = pnames[method]
+				n = newNode(t, search[l:], rootNode, nil, nr, rootNode.pnames)
+				rootNode.addChild(n)
 			}
 		} else if l < sl {
 			search = search[l:]
-			c := cn.findChildWithLabel(search[0])
+			c := rootNode.findChildWithLabel(search[0])
 			if c != nil {
 				// Go deeper
-				cn = c
+				rootNode = c
 				continue
 			}
 			// Create child node
@@ -428,10 +440,10 @@ func (r *Router) insert(method, path string, h http.HandlerFunc, t ntype, pnames
 			if method != "CORS" {
 				nr.AddMethodHandler(method, h)
 			}
-			n := newNode(t, search, cn, nil, nr, pnames)
-			cn.addChild(n)
+			n := newNode(t, search, rootNode, nil, nr, pnames)
+			rootNode.addChild(n)
 
-			cn.resource.Clean()
+			rootNode.resource.Clean()
 			n.resource.Clean()
 
 		} else {
@@ -440,12 +452,12 @@ func (r *Router) insert(method, path string, h http.HandlerFunc, t ntype, pnames
 				// add the handler to the node's map of methods to handlers
 
 				if method != "CORS" {
-					cn.resource.AddMethodHandler(method, h)
+					rootNode.resource.AddMethodHandler(method, h)
 				}
 				if method == "GET" {
-					cn.pnames["HEAD"] = pnames[method]
+					rootNode.pnames["HEAD"] = pnames[method]
 				}
-				cn.pnames[method] = pnames[method]
+				rootNode.pnames[method] = pnames[method]
 			}
 		}
 		return
@@ -456,4 +468,10 @@ func (r *Router) RegisterStatic(directoryPath, servePath string) {
 	fs := http.FileServer(FileSystem{http.Dir(directoryPath)})
 	r.staticHandler = http.StripPrefix(servePath, fs)
 	r.staticPath = servePath
+}
+
+func replaceAtIndex(in string, r rune, i int) string {
+	out := []rune(in)
+	out[i] = r
+	return string(out)
 }
