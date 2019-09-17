@@ -51,8 +51,8 @@ type SecureHeaders struct {
 }
 
 // SetDefaultHeaders will set certain default headers specified by the user
-func (defaultHeaders *DefaultHeaders) SetDefaultHeaders(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
+func (defaultHeaders *DefaultHeaders) SetDefaultHeaders(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, request *http.Request) {
 		if defaultHeaders.CacheControl != "" {
 			w.Header().Set("Cache-Control", defaultHeaders.CacheControl)
 		}
@@ -74,12 +74,12 @@ func (defaultHeaders *DefaultHeaders) SetDefaultHeaders(h http.Handler) http.Han
 		}
 		h.ServeHTTP(w, request)
 
-	})
+	}
 }
 
 // SetSecureHeaders sets some default security headers
-func (secureHeaders SecureHeaders) SetSecureHeaders(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
+func (secureHeaders SecureHeaders) SetSecureHeaders(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, request *http.Request) {
 		if secureHeaders.XSSProtection != "" {
 			w.Header().Set("X-XSS-Protection", secureHeaders.XSSProtection)
 		} else {
@@ -101,5 +101,5 @@ func (secureHeaders SecureHeaders) SetSecureHeaders(h http.Handler) http.Handler
 
 		w.Header().Set("Referrer-Policy", secureHeaders.ReferrerPolicy)
 		h.ServeHTTP(w, request)
-	})
+	}
 }
