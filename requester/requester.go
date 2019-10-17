@@ -32,7 +32,7 @@ func Get(url string, headers map[string]string, queryParams map[string]string) (
 }
 
 // Post will perform a POST request on the url with the headers, query params and request body
-func Post(url string, headers map[string]string, queryParams map[string]string, requestBody map[string]interface{}) (response *http.Response, err error) {
+func Post(url string, headers map[string]string, queryParams map[string]string, requestBody interface{}) (response *http.Response, err error) {
 	data, err := json.Marshal(requestBody)
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func Post(url string, headers map[string]string, queryParams map[string]string, 
 }
 
 // Delete will perform a Delete request on the url with the headers, query params and request body
-func Delete(url string, headers map[string]string, queryParams map[string]string, requestBody map[string]interface{}) (response *http.Response, err error) {
+func Delete(url string, headers map[string]string, queryParams map[string]string, requestBody interface{}) (response *http.Response, err error) {
 	data, err := json.Marshal(requestBody)
 	if err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ func Delete(url string, headers map[string]string, queryParams map[string]string
 }
 
 // Put will perform a PUT request on the url with the headers, query params and request body
-func Put(url string, headers map[string]string, queryParams map[string]string, requestBody map[string]interface{}) (response *http.Response, err error) {
+func Put(url string, headers map[string]string, queryParams map[string]string, requestBody interface{}) (response *http.Response, err error) {
 	data, err := json.Marshal(requestBody)
 	if err != nil {
 		return nil, err
@@ -119,7 +119,7 @@ func Put(url string, headers map[string]string, queryParams map[string]string, r
 }
 
 // Patch will perform a Patch request on the url with the headers, query params and request body
-func Patch(url string, headers map[string]string, queryParams map[string]string, requestBody map[string]interface{}) (response *http.Response, err error) {
+func Patch(url string, headers map[string]string, queryParams map[string]string, requestBody interface{}) (response *http.Response, err error) {
 	data, err := json.Marshal(requestBody)
 	if err != nil {
 		return nil, err
