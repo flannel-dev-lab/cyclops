@@ -44,6 +44,20 @@ func (session *Session) Get(r *http.Request) (data map[string]interface{}, err e
 	return session.Store.Get(cookieData.Value)
 }
 
+func (session *Session) getSessionDataWithKey(r *http.Request) (data map[string]interface{}, key string, err error) {
+	cookieData, err := session.Cookie.GetCookie(r, "session_id")
+	if err != nil {
+		return data, key, err
+	}
+
+	sessionData, err := session.Store.Get(cookieData.Value)
+	if err != nil {
+		return data, key, err
+	}
+
+	return sessionData, cookieData.Value, nil
+}
+
 // Delete only deletes a particular session from database
 func (session *Session) Delete(r *http.Request) (err error) {
 	cookieData, err := session.Cookie.GetCookie(r, "session_id")
@@ -57,4 +71,26 @@ func (session *Session) Delete(r *http.Request) (err error) {
 // Reset deletes all session values from the database
 func (session *Session) Reset(r *http.Request) (err error) {
 	return session.Store.Reset()
+}
+
+// Update updates the existing session with the data passes
+func (session *Session) Update(r *http.Request, w http.ResponseWriter, data map[string]interface{}, expiry time.Duration) (err error) {
+	existingSessionData, key, err := session.getSessionDataWithKey(r)
+	if err != nil {
+		if err == http.ErrNoCookie {
+			// Sets a new cookie if not found
+			err = session.Set(w, data, expiry)
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+
+	for key, value := range data {
+		existingSessionData[key] = value
+	}
+
+	return session.Store.Save(key, existingSessionData, expiry)
 }

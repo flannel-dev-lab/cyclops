@@ -132,7 +132,7 @@ func (r *Router) add(method, path string, h http.HandlerFunc) {
 	pnames := make(pNames)
 	pnames[method] = []string{}
 	for i, l := 0, len(path); i < l; i++ {
-		if path[i] == ':'{
+		if path[i] == ':' {
 			j := i + 1
 
 			r.insert(method, path[:i], nil, stype, nil)
@@ -260,7 +260,7 @@ func (r *Router) find(req *http.Request) (prefix string, h http.HandlerFunc) {
 				for parent != nil {
 					if sib := parent.findChildWithLabel('*'); sib != nil {
 						search = parent.prefix + search
-						rootNode= parent
+						rootNode = parent
 						goto MatchAny
 					}
 					parent = parent.parent

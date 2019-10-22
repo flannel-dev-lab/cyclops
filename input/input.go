@@ -41,6 +41,6 @@ func Form(key string, request *http.Request) string {
 	return request.FormValue(key)
 }
 
-func FileContent(r *http.Request, key string) (multipart.File, *multipart.FileHeader, error){
+func FileContent(r *http.Request, key string) (multipart.File, *multipart.FileHeader, error) {
 	return r.FormFile(key)
 }
