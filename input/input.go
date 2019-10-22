@@ -2,6 +2,7 @@
 package input
 
 import (
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strings"
@@ -10,17 +11,6 @@ import (
 // Query retrieves the url parameters from the request
 func Query(key string, request *http.Request) string {
 	return request.URL.Query().Get(key)
-}
-
-// ParamNames Gets all url parameter names list with the leading :
-func ParamNames(r *http.Request) []string {
-	var names []string
-	for k := range r.URL.Query() {
-		if strings.HasPrefix(k, ":") {
-			names = append(names, k)
-		}
-	}
-	return names
 }
 
 // TrimmedParamNames - Gets aaa url parameter names list without the leading :
@@ -49,4 +39,8 @@ func AddParam(r *http.Request, name, value string) {
 // Form retrieves the form parameters from the request
 func Form(key string, request *http.Request) string {
 	return request.FormValue(key)
+}
+
+func FileContent(r *http.Request, key string) (multipart.File, *multipart.FileHeader, error){
+	return r.FormFile(key)
 }
