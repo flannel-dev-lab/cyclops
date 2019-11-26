@@ -27,5 +27,6 @@ func (sentry Sentry) CaptureError(err error, message string) {
 
 // Bootstrap initializes the raven DSN
 func (sentry Sentry) Bootstrap() error {
+	raven.SetEnvironment(sentry.Environment)
 	return raven.SetDSN(sentry.DSN)
 }
