@@ -65,9 +65,9 @@ import (
 
 func main() {
 
-	defaultHeaders := middleware.DefaultHeaders{
+	~~defaultHeaders := middleware.DefaultHeaders{
         ContentType: "application/json",
-	}
+	}~~
 
     routerObj := router.New()
     routerObj.Get("/", middleware.NewChain(DefaultHeaders.DefaultHeaders).Then(Login))
