@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"runtime/debug"
@@ -25,7 +26,8 @@ func PanicHandler(h http.HandlerFunc) http.HandlerFunc {
 					err = errors.New("unknown error")
 				}
 				log.Print(string(debug.Stack()))
-				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+				log.Println(err.Error())
+				http.Error(responseWriter, fmt.Sprintf("{\"error\": \"%s\"}", err.Error()), http.StatusInternalServerError)
 				return
 			}
 		}()
