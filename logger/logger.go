@@ -24,7 +24,9 @@ func New(writer io.Writer) *CustomLogger {
 func (logger *CustomLogger) Message(message interface{}){
 	logData, _ := json.Marshal(message)
 
-	log.Println(string(logData))
+	logger.Writer.Write(logData)
+
+	// log.Println(string(logData))
 }
 
 func (logger *CustomLogger) Fatal(message interface{}){

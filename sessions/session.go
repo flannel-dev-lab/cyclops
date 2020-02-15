@@ -59,11 +59,13 @@ func (session *Session) getSessionDataWithKey(r *http.Request) (data map[string]
 }
 
 // Delete only deletes a particular session from database
-func (session *Session) Delete(r *http.Request) (err error) {
+func (session *Session) Delete(w http.ResponseWriter, r *http.Request) (err error) {
 	cookieData, err := session.Cookie.GetCookie(r, "session_id")
 	if err != nil {
 		return err
 	}
+
+	session.Cookie.Delete(w, cookieData)
 
 	return session.Store.Delete(cookieData.Value)
 }

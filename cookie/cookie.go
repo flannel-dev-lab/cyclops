@@ -30,6 +30,7 @@ type CyclopsCookie struct {
 	StrictSameSite bool
 	// Expires specifies time in seconds for a cookie to expire
 	Expires time.Duration
+	MaxAge int
 }
 
 // SetCookie Sets a cookie to the responseWriter
@@ -70,4 +71,11 @@ func (cyclopsCookie CyclopsCookie) GetCookie(r *http.Request, key string) (*http
 // GetAll returns array of cookies
 func (cyclopsCookie CyclopsCookie) GetAll(r *http.Request) []*http.Cookie {
 	return r.Cookies()
+}
+
+// Delete cookie
+func (cyclopsCookie CyclopsCookie) Delete(w http.ResponseWriter, cookie *http.Cookie) {
+	cookie.Expires = time.Now().Add(0 * time.Second)
+
+	http.SetCookie(w, cookie)
 }
