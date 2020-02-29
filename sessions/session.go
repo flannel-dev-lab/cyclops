@@ -10,6 +10,7 @@ import (
 type Session struct {
 	Store  Store
 	Cookie cookie.CyclopsCookie
+	expiry time.Duration
 }
 
 func (session *Session) generateSessionId() string {
@@ -17,11 +18,12 @@ func (session *Session) generateSessionId() string {
 	return uuidObj.String()
 }
 
-// Set will set a session to the database with a map of values and expiry. Once written, it will send the session_id as cookie
-func (session *Session) Set(w http.ResponseWriter, value map[string]interface{}, expiry time.Duration) (err error) {
+// Set will set a session to the database with a map of data and expiry. Once written, it will send the session_id as cookie
+func (session *Session) Set(w http.ResponseWriter, data map[string]interface{}, expiry time.Duration) (err error) {
+	session.expiry = expiry
 	sessionId := session.generateSessionId()
 
-	err = session.Store.Save(sessionId, value, expiry)
+	err = session.Store.Save(sessionId, data, expiry)
 	if err != nil {
 		return err
 	}
@@ -41,7 +43,17 @@ func (session *Session) Get(r *http.Request) (data map[string]interface{}, err e
 		return data, err
 	}
 
-	return session.Store.Get(cookieData.Value)
+	data, err = session.Store.Get(cookieData.Value)
+	if err != nil {
+		return data, err
+	}
+
+	err = session.Store.Save(cookieData.Value, data, session.expiry)
+	if err != nil {
+		return data, err
+	}
+
+	return data, nil
 }
 
 func (session *Session) getSessionDataWithKey(r *http.Request) (data map[string]interface{}, key string, err error) {
@@ -76,12 +88,12 @@ func (session *Session) Reset(r *http.Request) (err error) {
 }
 
 // Update updates the existing session with the data passes
-func (session *Session) Update(r *http.Request, w http.ResponseWriter, data map[string]interface{}, expiry time.Duration) (err error) {
+func (session *Session) Update(w http.ResponseWriter, r *http.Request, data map[string]interface{}) (err error) {
 	existingSessionData, key, err := session.getSessionDataWithKey(r)
 	if err != nil {
 		if err == http.ErrNoCookie {
 			// Sets a new cookie if not found
-			err = session.Set(w, data, expiry)
+			err = session.Set(w, data, session.expiry)
 			if err != nil {
 				return err
 			}
@@ -94,5 +106,11 @@ func (session *Session) Update(r *http.Request, w http.ResponseWriter, data map[
 		existingSessionData[key] = value
 	}
 
-	return session.Store.Save(key, existingSessionData, expiry)
+	session.Cookie.Name = "session_id"
+	session.Cookie.Value = key
+	session.Cookie.Expires = session.expiry
+
+	session.Cookie.SetCookie(w)
+
+	return session.Store.Save(key, existingSessionData, session.expiry)
 }

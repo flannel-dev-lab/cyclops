@@ -46,7 +46,12 @@ func (redisSessionStore *RedisSessionStore) Save(key string, value map[string]in
 		return err
 	}
 
+	if expiry == 0 {
+		expiry = 3600
+	}
+
 	_, err = conn.Do("SETEX", key, int(expiry), data)
+
 	return err
 }
 
