@@ -3,7 +3,10 @@ go:
   - 1.14.x
 env:
   - GO111MODULE=on
-script: go test -race -v ./...
+script:
+  - go test -race -v ./... -coverprofile=coverage.out
 branches:
   only:
     - /.*/
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
