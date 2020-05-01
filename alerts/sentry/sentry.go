@@ -1,19 +1,19 @@
-// sentry alerting system
+// Package sentry implements the Alert interface for Sentry alerting systems
 package sentry
 
 import "github.com/getsentry/raven-go"
 
 // Sentry struct to hold sentry variables
 type Sentry struct {
-	// URL for sentry
+	// DSN is the URL for sentry
 	DSN string
-	// Specifies if alert belongs to dev, stage, production environment
+	// Environment specifies if alert belongs to dev, stage, production environment
 	Environment string
-	// Trigger to see if alert is enabled or disabled
+	// Enabled is a trigger for an alert to be enabled or disabled
 	Enabled bool
 }
 
-// CaptureError implements the alert interface to capture error
+// CaptureError implements the alert interface to capture error and send a message if alerting is enabled
 func (sentry Sentry) CaptureError(err error, message string) {
 	if sentry.Enabled {
 		raven.CaptureErrorAndWait(
@@ -25,7 +25,7 @@ func (sentry Sentry) CaptureError(err error, message string) {
 	}
 }
 
-// Bootstrap initializes the raven DSN
+// Bootstrap initializes the raven DSN by setting the environment
 func (sentry Sentry) Bootstrap() error {
 	raven.SetEnvironment(sentry.Environment)
 	return raven.SetDSN(sentry.DSN)

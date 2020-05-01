@@ -7,11 +7,13 @@
 |-------------|:---------:|
 | Name        | No |
 | Value       | No |
-| Path        | Yes|
+| Path        | Yes |
+| Domain      | No |
 | Secure      | Yes |
 | HttpOnly    | Yes |
-| StrictSameSite | Yes|
-| Expires | Yes|
+| SameSite    | Yes |
+| Expires | Yes |
+| MaxAge | Yes |
 
 ## Creating a Cookie:
 ```
@@ -57,3 +59,17 @@ func Login(w http.ResponseWriter, r *http.Request) {
 ```
 To read a cookie, we create an empty cookie object and call the `GetAll` method which takes in `*http.Request` and 
 returns a array  of `*http.Cookie`
+
+## Deleting a Cookie
+Deletes a cookie by setting max-age to 0
+```
+import "github.com/flannel-dev-lab/cyclops/cookie"
+
+func Login(w http.ResponseWriter, r *http.Request) {
+    cyclopsCookie := cookie.CyclopsCookie{}
+
+    cookie, _ := cookieObj.GetCookie(r, "test")
+    
+    cyclopsCookie.Delete(w, cookie)
+}
+```

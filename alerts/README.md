@@ -1,9 +1,9 @@
 # Alerting
 
-Alerting just allows you to use custom alerting providers such as sentry, etc. The only thing the 
+Alerting allows you to use custom alerting providers such as sentry, etc. The only thing the 
 developers need to do is to implement the alert interface
 
-Example usage of alerting
+Example usage of alerting with sentry
 
 ```go
 package main
@@ -27,7 +27,7 @@ type Sentry struct {
 
 func main() {
 	sentryAlerts := sentry.Sentry{
-		DSN: "",
+		DSN: "https://sentry.io/app1",
 		Environment: "dev",
 		Enabled: true,
 	}
@@ -39,23 +39,6 @@ func main() {
 	alert = sentryAlerts
 	alert.CaptureError(errors.New("test"), "test")
 }
-
-
-// CaptureError implements the alert interface to capture error
-func (sentry Sentry) CaptureError(err error, message string) {
-	if sentry.Enabled {
-		raven.CaptureErrorAndWait(
-			err,
-			map[string]string{
-				"env":     sentry.Environment,
-				"message": message,
-			})
-	}
-}
-
-// Initializes the raven DSN
-func (sentry Sentry) Bootstrap() error {
-	return raven.SetDSN(sentry.DSN)
-}
-
 ```
+
+As `Alert` is an interface{}, you can implement it to use your own custom alerting

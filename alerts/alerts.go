@@ -1,10 +1,11 @@
-// alerts handles the alerting systems such as Sentry, etc
+// Package alerts handles the alerting systems such as Sentry, etc
 package alerts
 
-// Interface to configure alerting system
+// Alert is an interface to configure alerting system. Cyclops provides sentry alerting by default and implements the
+// following methods
 type Alert interface {
-	// Method to implement to capture error
+	// CaptureError captures error and a message and sends an alert
 	CaptureError(err error, message string)
-	// Bootstrapping logic for alerts
+	// Bootstrap acts like a constructor to setup alerting parameters such as environment, alerting endpoint, etc.
 	Bootstrap() error
 }

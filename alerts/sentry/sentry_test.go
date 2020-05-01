@@ -29,3 +29,15 @@ func TestSentry_Bootstrap(t *testing.T) {
 func TestSentry_CaptureError(t *testing.T) {
 	sentry.CaptureError(errors.New("test-error"), "test-error")
 }
+
+func BenchmarkSentry_Bootstrap(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		sentry.Bootstrap()
+	}
+}
+
+func BenchmarkSentry_CaptureError(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		sentry.CaptureError(errors.New("test-error"), "test-error")
+	}
+}
