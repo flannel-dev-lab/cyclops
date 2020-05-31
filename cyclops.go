@@ -39,7 +39,7 @@ func StartTLSServer(address string, handler http.Handler, certFile, keyFile stri
 
 // Param - Get a url parameter by name
 func Param(r *http.Request, name string) string {
-	return input.Query(":"+name, r)
+	return input.Query(name, r)
 }
 
 // ParamNames - Get a url parameter name list with the leading :
