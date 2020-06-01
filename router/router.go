@@ -1,6 +1,7 @@
-package KCRouter
+package router
 
 import (
+	"log"
 	"net/http"
 	"strings"
 )
@@ -33,7 +34,7 @@ type Router struct {
 func New(
 	stripTrailingSlashOnRegisteringHandlers bool,
 	notFoundHandler,
-	methodNotFoundHandler http.HandlerFunc) *Router {
+	methodNotAllowedHandler http.HandlerFunc) *Router {
 
 	node := &node{
 		children:     []*node{},
@@ -53,10 +54,10 @@ func New(
 		router.NotFoundHandler = notFoundHandler
 	}
 
-	if methodNotFoundHandler == nil {
+	if methodNotAllowedHandler == nil {
 		router.MethodNotAllowedHandler = CyclopsMethodNotAllowedHandler
 	} else {
-		router.MethodNotAllowedHandler = methodNotFoundHandler
+		router.MethodNotAllowedHandler = methodNotAllowedHandler
 	}
 
 	return router
@@ -128,10 +129,7 @@ func (r *Router) add(method, path string, handler http.HandlerFunc) {
 }
 
 func (r *Router) find(req *http.Request) (http.HandlerFunc, error) {
-	err := req.ParseForm()
-	if err != nil {
-		return nil, err
-	}
+	_ = req.ParseForm()
 
 	params := req.Form
 
@@ -153,28 +151,20 @@ func (r *Router) find(req *http.Request) (http.HandlerFunc, error) {
 		return handler, nil
 	} else {
 		if len(node.methods) == 0 {
-			notFoundHandler := func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusNotFound)
-			}
-
-			return notFoundHandler, nil
+			return r.NotFoundHandler, nil
 		} else {
-			methodNotAllowedHandler := func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusMethodNotAllowed)
-			}
-
-			return methodNotAllowedHandler, nil
+			return r.MethodNotAllowedHandler, nil
 		}
 	}
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	handler, err := r.find(req)
-	if err != nil {
-		panic("error while parsing form")
+	if strings.Contains(req.URL.Path, r.staticPath) && r.staticPath != "" {
+		r.staticHandler.ServeHTTP(w, req)
+	} else {
+		handler, _ := r.find(req)
+		handler(w, req)
 	}
-
-	handler(w, req)
 }
 
 // FileSystem custom file system handler
@@ -186,17 +176,20 @@ type FileSystem struct {
 func (fs FileSystem) Open(path string) (http.File, error) {
 	f, err := fs.fs.Open(path)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
 	s, err := f.Stat()
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
 	if s.IsDir() {
 		index := strings.TrimSuffix(path, "/") + "/index.html"
 		if _, err := fs.fs.Open(index); err != nil {
+			log.Println(err)
 			return nil, err
 		}
 	}

@@ -1,4 +1,4 @@
-package sentry
+package alerts
 
 import (
 	"errors"

@@ -1,4 +1,4 @@
-package KCRouter
+package router
 
 import (
 	"net/http"

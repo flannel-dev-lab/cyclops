@@ -1,10 +1,12 @@
-package KCRouter
+package router
 
 import (
 	"fmt"
 	"github.com/flannel-dev-lab/cyclops"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 )
 
@@ -281,7 +283,7 @@ var (
 
 func TestRouterParam(t *testing.T) {
 	r := New(true, nil, nil)
-	r.Get( "/users/:id", func(w http.ResponseWriter, r *http.Request) {})
+	r.Get("/users/:id", func(w http.ResponseWriter, r *http.Request) {})
 	req, _ := http.NewRequest("GET", "/users/1", nil)
 	w := httptest.NewRecorder()
 
@@ -292,10 +294,329 @@ func TestRouterParam(t *testing.T) {
 
 	h(w, req)
 
-	fmt.Println("QUERY", req.URL.Query())
-	fmt.Println(cyclops.Param(req, "id"))
 	if cyclops.Param(req, "id") != "1" {
 		t.Errorf(fmt.Sprintf("%s: params do not match", t.Name()))
 	}
 }
 
+func TestRouterInitializationWithCustomNotFoundHandler(t *testing.T) {
+	notFoundHandler := func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	}
+
+	r := New(true, notFoundHandler, nil)
+	r.Get("/use", func(w http.ResponseWriter, r *http.Request) {})
+
+	req, _ := http.NewRequest("GET", "/users/1", nil)
+	w := httptest.NewRecorder()
+
+	h, err := r.find(req)
+	if err != nil {
+		t.Errorf("%s: unable to get handler: %s", t.Name(), err.Error())
+	}
+
+	h(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("%s: unable to get not found status code", t.Name())
+	}
+}
+
+func TestRouterInitializationWithCustomMethodNotAllowedHandler(t *testing.T) {
+	notAllowedHandler := func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
+
+	r := New(true, nil, notAllowedHandler)
+	r.Post("/use", func(w http.ResponseWriter, r *http.Request) {})
+
+	req, _ := http.NewRequest("GET", "/use", nil)
+	w := httptest.NewRecorder()
+
+	h, err := r.find(req)
+	if err != nil {
+		t.Errorf("%s: unable to get handler: %s", t.Name(), err.Error())
+	}
+
+	h(w, req)
+
+	if w.Code != http.StatusMethodNotAllowed {
+		t.Errorf("%s: unable to get not found status code", t.Name())
+	}
+}
+
+func TestRouterInitializationWithCyclopsNotFoundHandler(t *testing.T) {
+	r := New(true, nil, nil)
+	r.Get("/use", func(w http.ResponseWriter, r *http.Request) {})
+
+	req, _ := http.NewRequest("GET", "/users/1", nil)
+	w := httptest.NewRecorder()
+
+	h, err := r.find(req)
+	if err != nil {
+		t.Errorf("%s: unable to get handler: %s", t.Name(), err.Error())
+	}
+
+	h(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("%s: unable to get not found status code", t.Name())
+	}
+}
+
+func TestRouterInitializationWithCyclopsMethodNotAllowedHandler(t *testing.T) {
+	r := New(true, nil, nil)
+	r.Post("/use", func(w http.ResponseWriter, r *http.Request) {})
+
+	req, _ := http.NewRequest("GET", "/use", nil)
+	w := httptest.NewRecorder()
+
+	h, err := r.find(req)
+	if err != nil {
+		t.Errorf("%s: unable to get handler: %s", t.Name(), err.Error())
+	}
+
+	h(w, req)
+
+	if w.Code != http.StatusMethodNotAllowed {
+		t.Errorf("%s: unable to get not found status code", t.Name())
+	}
+}
+
+func TestRouter_IncorrectInputs(t *testing.T) {
+	cases := []struct {
+		Method  string
+		Path    string
+		Handler http.HandlerFunc
+	}{
+		{"", "/", nil},
+		{"GET", "users/", nil},
+		{"GET", "/path", nil},
+	}
+
+	for _, testCase := range cases {
+		codeThatPanics(t, testCase.Method, testCase.Path, testCase.Handler)
+	}
+}
+
+func codeThatPanics(t *testing.T, method, path string, handler http.HandlerFunc) {
+	defer func() { recover() }()
+
+	r := New(true, nil, nil)
+	r.add(method, path, handler)
+
+	t.Errorf("should have panicked")
+}
+
+func TestRouter_ServeHTTP(t *testing.T) {
+	r := New(true, nil, nil)
+	r.Post("/use", func(w http.ResponseWriter, r *http.Request) {})
+
+	req, _ := http.NewRequest("POST", "/use", nil)
+	w := httptest.NewRecorder()
+
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Errorf("%s: expected 200 got %d", t.Name(), w.Code)
+	}
+}
+
+func TestRouter_FileServer(t *testing.T) {
+	err := os.Mkdir("static", 0777)
+	if err != nil {
+		t.Fatalf("%s: %s", t.Name(), err.Error())
+	}
+
+	err = ioutil.WriteFile("static/index.html", nil, 0777)
+	if err != nil {
+		t.Fatalf("%s: %s", t.Name(), err.Error())
+	}
+
+	cases := []struct{
+		DirectoryPath string
+		StatusCode int
+	}{
+		{"static", http.StatusOK},
+		{"bad_path", http.StatusNotFound},
+	}
+
+	for _, testCase := range cases {
+		r := New(false, nil, nil)
+		r.RegisterStatic(testCase.DirectoryPath, "/static/")
+
+		req, _ := http.NewRequest("GET", "/static/", nil)
+		w := httptest.NewRecorder()
+
+		r.ServeHTTP(w, req)
+
+		if w.Code != testCase.StatusCode {
+			t.Errorf("%s: expected %d got %d", t.Name(), testCase.StatusCode, w.Code)
+		}
+	}
+
+	err = os.RemoveAll("static")
+	if err != nil {
+		t.Fatalf("%s: %s", t.Name(), err.Error())
+	}
+}
+
+func TestRouter_FileServerOpen(t *testing.T) {
+	err := os.Mkdir("static", 0777)
+	if err != nil {
+		t.Fatalf("%s: %s", t.Name(), err.Error())
+	}
+
+	err = ioutil.WriteFile("static/index.html", nil, 0777)
+	if err != nil {
+		t.Fatalf("%s: %s", t.Name(), err.Error())
+	}
+
+	cases := []struct{
+		DirectoryPath string
+		ErrorExpected bool
+	}{
+		{"static", false},
+		{"bad_path", true},
+	}
+
+	for _, testCase := range cases {
+		fs := FileSystem{http.Dir(testCase.DirectoryPath)}
+
+		_, err := fs.Open(testCase.DirectoryPath)
+		fmt.Println(err)
+	}
+
+	err = os.RemoveAll("static")
+	if err != nil {
+		t.Fatalf("%s: %s", t.Name(), err.Error())
+	}
+}
+
+func TestRouter_TwoParam(t *testing.T) {
+	r := New(false, nil, nil)
+	r.Get("/users/:uid/files/:fid", func(w http.ResponseWriter, r *http.Request) {})
+
+	req, _ := http.NewRequest("GET", "/users/1/files/1", nil)
+	w := httptest.NewRecorder()
+
+	h, err := r.find(req)
+	if err != nil {
+		t.Errorf("%s: unable to get handler: %s", t.Name(), err.Error())
+	}
+
+	h(w, req)
+
+	if cyclops.Param(req, "uid") != "1" {
+		t.Errorf(fmt.Sprintf("%s: params do not match", t.Name()))
+	}
+
+	if cyclops.Param(req, "fid") != "1" {
+		t.Errorf(fmt.Sprintf("%s: params do not match", t.Name()))
+	}
+}
+
+func TestRouterMicroParam(t *testing.T) {
+	r := New(false, nil, nil)
+	r.Get("/:a/:b/:c", func(w http.ResponseWriter, r *http.Request) {})
+
+	req, _ := http.NewRequest("GET", "/1/2/3", nil)
+	w := httptest.NewRecorder()
+
+	h, err := r.find(req)
+	if err != nil {
+		t.Errorf("%s: unable to get handler: %s", t.Name(), err.Error())
+	}
+
+	h(w, req)
+
+	if cyclops.Param(req, "a") != "1" {
+		t.Errorf(fmt.Sprintf("%s: params do not match", t.Name()))
+	}
+
+	if cyclops.Param(req, "b") != "2" {
+		t.Errorf(fmt.Sprintf("%s: params do not match", t.Name()))
+	}
+
+	if cyclops.Param(req, "c") != "3" {
+		t.Errorf(fmt.Sprintf("%s: params do not match", t.Name()))
+	}
+}
+
+func TestRouter_HttpMethods(t *testing.T) {
+	cases := []struct{
+		Method string
+		Handler http.HandlerFunc
+	}{
+		{http.MethodGet, func(writer http.ResponseWriter, request *http.Request) {}},
+		{http.MethodPost, func(writer http.ResponseWriter, request *http.Request) {}},
+		{http.MethodConnect, func(writer http.ResponseWriter, request *http.Request) {}},
+		{http.MethodDelete, func(writer http.ResponseWriter, request *http.Request) {}},
+		{http.MethodPatch, func(writer http.ResponseWriter, request *http.Request) {}},
+		{http.MethodPut, func(writer http.ResponseWriter, request *http.Request) {}},
+		{http.MethodTrace, func(writer http.ResponseWriter, request *http.Request) {}},
+		{http.MethodHead, func(writer http.ResponseWriter, request *http.Request) {}},
+		{http.MethodOptions, func(writer http.ResponseWriter, request *http.Request) {}},
+	}
+
+	for _, testCase := range cases {
+		r := New(false, nil, nil)
+
+		switch testCase.Method {
+		case http.MethodGet:
+			r.Get("/", testCase.Handler)
+		case http.MethodPost:
+			r.Post("/", testCase.Handler)
+		case http.MethodConnect:
+			r.Connect("/", testCase.Handler)
+		case http.MethodDelete:
+			r.Delete("/", testCase.Handler)
+		case http.MethodPatch:
+			r.Patch("/", testCase.Handler)
+		case http.MethodPut:
+			r.Put("/", testCase.Handler)
+		case http.MethodTrace:
+			r.Trace("/", testCase.Handler)
+		case http.MethodHead:
+			r.Head("/", testCase.Handler)
+		case http.MethodOptions:
+			r.Options("/", testCase.Handler)
+		}
+
+		req, _ := http.NewRequest(testCase.Method, "/", nil)
+
+		h, err := r.find(req)
+		if err != nil {
+			t.Errorf("%s: unable to get handler: %s", t.Name(), err.Error())
+		}
+
+		if h == nil {
+			t.Errorf("%s: nil handler", t.Name())
+		}
+	}
+}
+
+func TestRouter_UpdateRoute(t *testing.T) {
+	r := New(false, nil, nil)
+
+	r.Get("/users/hello", func(writer http.ResponseWriter, request *http.Request) {
+		fmt.Fprintf(writer, "hello")
+	})
+
+	r.Get("/users/hello", func(writer http.ResponseWriter, request *http.Request) {
+		fmt.Fprintf(writer, "hello world")
+	})
+
+	req, _ := http.NewRequest("GET", "/users/hello", nil)
+	w := httptest.NewRecorder()
+
+	h, err := r.find(req)
+	if err != nil {
+		t.Errorf("%s: unable to get handler: %s", t.Name(), err.Error())
+	}
+
+	h(w, req)
+
+	if w.Body.String() != "hello world" {
+		t.Errorf("%s: expected 'hello world' got %s", t.Name(), w.Body.String())
+	}
+}

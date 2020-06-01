@@ -13,7 +13,7 @@ func Query(key string, request *http.Request) string {
 	return request.URL.Query().Get(key)
 }
 
-// TrimmedParamNames - Gets aaa url parameter names list without the leading :
+// TrimmedParamNames - Gets a url parameter names list without the leading :
 func TrimmedParamNames(r *http.Request) []string {
 	var names []string
 	for k := range r.URL.Query() {
