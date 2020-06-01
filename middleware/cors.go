@@ -34,8 +34,8 @@ type CORS struct {
 }
 
 // CORSHandler handles the simple and pre-flight requests
-func (cors CORS) CORSHandler(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
+func (cors CORS) CORSHandler(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, request *http.Request) {
 		if request.Method == http.MethodOptions {
 			// Handling pre-flight requests
 			cors.handlePreflight(w, request)
@@ -46,7 +46,7 @@ func (cors CORS) CORSHandler(h http.Handler) http.Handler {
 			cors.handleSimple(w, request)
 			h.ServeHTTP(w, request)
 		}
-	})
+	}
 }
 
 // handleSimple handles the simple requests

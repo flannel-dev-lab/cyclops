@@ -432,9 +432,9 @@ func TestRouter_FileServer(t *testing.T) {
 		t.Fatalf("%s: %s", t.Name(), err.Error())
 	}
 
-	cases := []struct{
+	cases := []struct {
 		DirectoryPath string
-		StatusCode int
+		StatusCode    int
 	}{
 		{"static", http.StatusOK},
 		{"bad_path", http.StatusNotFound},
@@ -471,7 +471,7 @@ func TestRouter_FileServerOpen(t *testing.T) {
 		t.Fatalf("%s: %s", t.Name(), err.Error())
 	}
 
-	cases := []struct{
+	cases := []struct {
 		DirectoryPath string
 		ErrorExpected bool
 	}{
@@ -543,8 +543,8 @@ func TestRouterMicroParam(t *testing.T) {
 }
 
 func TestRouter_HttpMethods(t *testing.T) {
-	cases := []struct{
-		Method string
+	cases := []struct {
+		Method  string
 		Handler http.HandlerFunc
 	}{
 		{http.MethodGet, func(writer http.ResponseWriter, request *http.Request) {}},

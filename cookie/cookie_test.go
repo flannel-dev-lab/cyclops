@@ -1,8 +1,6 @@
 package cookie
 
 import (
-	"fmt"
-	"github.com/flannel-dev-lab/cyclops/router"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -80,43 +78,4 @@ func TestCyclopsCookie_SetCookie(t *testing.T) {
 			t.Fatalf("%s", "cookie values do not match")
 		}
 	}
-}
-
-func TestCyclopsCookie_Delete(t *testing.T) {
-	r := router.New(false, nil, nil)
-
-	r.Get("/", func(writer http.ResponseWriter, request *http.Request) {
-		cookie := CyclopsCookie{
-			Name:     "name",
-			Value:    "test",
-			Domain:   "google.com",
-			Secure:   false,
-			HttpOnly: false,
-			SameSite: http.SameSiteNoneMode,
-			Expires:  3600,
-			MaxAge:   3600,
-		}
-
-		cookie.SetCookie(writer)
-		writer.WriteHeader(200)
-		return
-	})
-
-	r.Get("/hello", func(writer http.ResponseWriter, request *http.Request) {
-		cookie := CyclopsCookie{}
-
-		fmt.Println(cookie.GetCookie(request, "name"))
-		return
-	})
-
-	req, _ := http.NewRequest("GET", "/", nil)
-	w := httptest.NewRecorder()
-
-	r.ServeHTTP(w, req)
-
-	req, _ = http.NewRequest("GET", "/hello", nil)
-	req.Header = w.Header()
-	w = httptest.NewRecorder()
-
-	r.ServeHTTP(w, req)
 }
