@@ -1,5 +1,5 @@
 // Package sentry implements the Alert interface for Sentry alerting systems
-package sentry
+package alerts
 
 import "github.com/getsentry/raven-go"
 

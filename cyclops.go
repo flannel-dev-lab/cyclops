@@ -6,7 +6,6 @@ import (
 	"github.com/flannel-dev-lab/cyclops/input"
 	"log"
 	"net/http"
-	"strings"
 )
 
 const banner = `
@@ -39,16 +38,5 @@ func StartTLSServer(address string, handler http.Handler, certFile, keyFile stri
 
 // Param - Get a url parameter by name
 func Param(r *http.Request, name string) string {
-	return input.Query(":"+name, r)
-}
-
-// ParamNames - Get a url parameter name list with the leading :
-func ParamNames(r *http.Request) []string {
-	var names []string
-	for k := range r.URL.Query() {
-		if strings.HasPrefix(k, ":") {
-			names = append(names, k)
-		}
-	}
-	return names
+	return input.Query(name, r)
 }

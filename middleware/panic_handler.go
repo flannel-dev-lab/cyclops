@@ -1,8 +1,8 @@
 package middleware
 
 import (
+	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"runtime/debug"
@@ -27,7 +27,10 @@ func PanicHandler(h http.HandlerFunc) http.HandlerFunc {
 				}
 				log.Print(string(debug.Stack()))
 				log.Println(err.Error())
-				http.Error(responseWriter, fmt.Sprintf("{\"error\": \"%s\"}", err.Error()), http.StatusInternalServerError)
+
+				errData, _ := json.Marshal(map[string]string{"error": err.Error()})
+
+				http.Error(responseWriter, string(errData), http.StatusInternalServerError)
 				return
 			}
 		}()

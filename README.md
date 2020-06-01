@@ -33,7 +33,7 @@ import (
 )
 
 func main() {
-    routerObj := router.New()
+    routerObj := router.New(false, nil, nil)
 
     routerObj.Get("/hello", middleware.NewChain().Then(Hello))
     routerObj.Post("/bye", Bye)

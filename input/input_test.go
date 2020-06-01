@@ -1,7 +1,12 @@
 package input
 
 import (
+	"bytes"
+	"fmt"
+	"github.com/flannel-dev-lab/cyclops/router"
 	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"testing"
 )
 
@@ -27,39 +32,27 @@ func TestQuery(t *testing.T) {
 	}
 }
 
-func TestTrimmedParamNames(t *testing.T) {
+func Test_Form(t *testing.T) {
 	t.Parallel()
 
-	request, err := http.NewRequest(http.MethodPost, "http://localhost", nil)
-	if err != nil {
-		t.Error(err)
-	}
+	r := router.New(true, nil, nil)
+	r.Post("/use", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(r.ParseForm())
+		fmt.Println(r.Form.Get("test"))
+		fmt.Println(Form("test", r))
+	})
 
-	q := request.URL.Query()
-	q.Add(":test", "value")
-	q.Add("test2", "value2")
+	data := url.Values{}
+	data.Set("client_id", "test")
 
-	request.URL.RawQuery = q.Encode()
+	req, _ := http.NewRequest("POST", "/use", bytes.NewBufferString(data.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	if len(TrimmedParamNames(request)) != 1 {
-		t.Error("existing trimmed param not present in result")
-	}
-}
+	w := httptest.NewRecorder()
 
-func TestAddParam(t *testing.T) {
-	t.Parallel()
+	r.ServeHTTP(w, req)
 
-	request, err := http.NewRequest(http.MethodPost, "http://localhost", nil)
-	if err != nil {
-		t.Error(err)
-	}
-
-	AddParam(request, "test", "value")
-	AddParam(request, ":test", "value2")
-
-	if len(TrimmedParamNames(request)) != 2 {
-		t.Error("no parameters were added")
-	}
+	fmt.Println("OUT", Form("test", req))
 }
 
 // Benchmarks
@@ -81,41 +74,5 @@ func BenchmarkQuery(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		Query("test", request)
-	}
-}
-
-func BenchmarkTrimmedParamNames(b *testing.B) {
-	b.StopTimer()
-	b.ReportAllocs()
-
-	request, err := http.NewRequest(http.MethodPost, "http://localhost", nil)
-	if err != nil {
-		b.Error(err)
-	}
-
-	q := request.URL.Query()
-	q.Add(":test", "value")
-	q.Add("test2", "value2")
-
-	request.URL.RawQuery = q.Encode()
-
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		TrimmedParamNames(request)
-	}
-}
-
-func BenchmarkAddParam(b *testing.B) {
-	b.StopTimer()
-	b.ReportAllocs()
-
-	request, err := http.NewRequest(http.MethodPost, "http://localhost", nil)
-	if err != nil {
-		b.Error(err)
-	}
-
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		AddParam(request, "test", "value")
 	}
 }
