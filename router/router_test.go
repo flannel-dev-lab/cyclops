@@ -4,281 +4,14 @@ import (
 	"fmt"
 	"github.com/flannel-dev-lab/cyclops"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
+	"strings"
 	"testing"
-)
-
-type route struct {
-	method  string
-	path    string
-	handler http.HandlerFunc
-}
-
-var (
-	api = []route{
-		// OAuth Authorizations
-		{"GET", "/authorizations", nil},
-		{"GET", "/authorizations/:id", nil},
-		{"POST", "/authorizations", nil},
-		{"PUT", "/authorizations/clients/:client_id", nil},
-		{"PATCH", "/authorizations/:id", nil},
-		{"DELETE", "/authorizations/:id", nil},
-		{"GET", "/applications/:client_id/tokens/:access_token", nil},
-		{"DELETE", "/applications/:client_id/tokens", nil},
-		{"DELETE", "/applications/:client_id/tokens/:access_token", nil},
-
-		// Activity
-		{"GET", "/events", nil},
-		{"GET", "/repos/:owner/:repo/events", nil},
-		{"GET", "/networks/:owner/:repo/events", nil},
-		{"GET", "/orgs/:org/events", nil},
-		{"GET", "/users/:user/received_events", nil},
-		{"GET", "/users/:user/received_events/public", nil},
-		{"GET", "/users/:user/events", nil},
-		{"GET", "/users/:user/events/public", nil},
-		{"GET", "/users/:user/events/orgs/:org", nil},
-		{"GET", "/feeds", nil},
-		{"GET", "/notifications", nil},
-		{"GET", "/repos/:owner/:repo/notifications", nil},
-		{"PUT", "/notifications", nil},
-		{"PUT", "/repos/:owner/:repo/notifications", nil},
-		{"GET", "/notifications/threads/:id", nil},
-		{"PATCH", "/notifications/threads/:id", nil},
-		{"GET", "/notifications/threads/:id/subscription", nil},
-		{"PUT", "/notifications/threads/:id/subscription", nil},
-		{"DELETE", "/notifications/threads/:id/subscription", nil},
-		{"GET", "/repos/:owner/:repo/stargazers", nil},
-		{"GET", "/users/:user/starred", nil},
-		{"GET", "/user/starred", nil},
-		{"GET", "/user/starred/:owner/:repo", nil},
-		{"PUT", "/user/starred/:owner/:repo", nil},
-		{"DELETE", "/user/starred/:owner/:repo", nil},
-		{"GET", "/repos/:owner/:repo/subscribers", nil},
-		{"GET", "/users/:user/subscriptions", nil},
-		{"GET", "/user/subscriptions", nil},
-		{"GET", "/repos/:owner/:repo/subscription", nil},
-		{"PUT", "/repos/:owner/:repo/subscription", nil},
-		{"DELETE", "/repos/:owner/:repo/subscription", nil},
-		{"GET", "/user/subscriptions/:owner/:repo", nil},
-		{"PUT", "/user/subscriptions/:owner/:repo", nil},
-		{"DELETE", "/user/subscriptions/:owner/:repo", nil},
-
-		// Gists
-		{"GET", "/users/:user/gists", nil},
-		{"GET", "/gists", nil},
-		{"GET", "/gists/public", nil},
-		{"GET", "/gists/starred", nil},
-		{"GET", "/gists/:id", nil},
-		{"POST", "/gists", nil},
-		{"PATCH", "/gists/:id", nil},
-		{"PUT", "/gists/:id/star", nil},
-		{"DELETE", "/gists/:id/star", nil},
-		{"GET", "/gists/:id/star", nil},
-		{"POST", "/gists/:id/forks", nil},
-		{"DELETE", "/gists/:id", nil},
-
-		// Git Data
-		{"GET", "/repos/:owner/:repo/git/blobs/:sha", nil},
-		{"POST", "/repos/:owner/:repo/git/blobs", nil},
-		{"GET", "/repos/:owner/:repo/git/commits/:sha", nil},
-		{"POST", "/repos/:owner/:repo/git/commits", nil},
-		{"GET", "/repos/:owner/:repo/git/refs/*ref", nil},
-		{"GET", "/repos/:owner/:repo/git/refs", nil},
-		{"POST", "/repos/:owner/:repo/git/refs", nil},
-		{"PATCH", "/repos/:owner/:repo/git/refs/*ref", nil},
-		{"DELETE", "/repos/:owner/:repo/git/refs/*ref", nil},
-		{"GET", "/repos/:owner/:repo/git/tags/:sha", nil},
-		{"POST", "/repos/:owner/:repo/git/tags", nil},
-		{"GET", "/repos/:owner/:repo/git/trees/:sha", nil},
-		{"POST", "/repos/:owner/:repo/git/trees", nil},
-
-		// Issues
-		{"GET", "/issues", nil},
-		{"GET", "/user/issues", nil},
-		{"GET", "/orgs/:org/issues", nil},
-		{"GET", "/repos/:owner/:repo/issues", nil},
-		{"GET", "/repos/:owner/:repo/issues/:number", nil},
-		{"POST", "/repos/:owner/:repo/issues", nil},
-		{"PATCH", "/repos/:owner/:repo/issues/:number", nil},
-		{"GET", "/repos/:owner/:repo/assignees", nil},
-		{"GET", "/repos/:owner/:repo/assignees/:assignee", nil},
-		{"GET", "/repos/:owner/:repo/issues/:number/comments", nil},
-		{"GET", "/repos/:owner/:repo/issues/comments", nil},
-		{"GET", "/repos/:owner/:repo/issues/comments/:id", nil},
-		{"POST", "/repos/:owner/:repo/issues/:number/comments", nil},
-		{"PATCH", "/repos/:owner/:repo/issues/comments/:id", nil},
-		{"DELETE", "/repos/:owner/:repo/issues/comments/:id", nil},
-		{"GET", "/repos/:owner/:repo/issues/:number/events", nil},
-		{"GET", "/repos/:owner/:repo/issues/events", nil},
-		{"GET", "/repos/:owner/:repo/issues/events/:id", nil},
-		{"GET", "/repos/:owner/:repo/labels", nil},
-		{"GET", "/repos/:owner/:repo/labels/:name", nil},
-		{"POST", "/repos/:owner/:repo/labels", nil},
-		{"PATCH", "/repos/:owner/:repo/labels/:name", nil},
-		{"DELETE", "/repos/:owner/:repo/labels/:name", nil},
-		{"GET", "/repos/:owner/:repo/issues/:number/labels", nil},
-		{"POST", "/repos/:owner/:repo/issues/:number/labels", nil},
-		{"DELETE", "/repos/:owner/:repo/issues/:number/labels/:name", nil},
-		{"PUT", "/repos/:owner/:repo/issues/:number/labels", nil},
-		{"DELETE", "/repos/:owner/:repo/issues/:number/labels", nil},
-		{"GET", "/repos/:owner/:repo/milestones/:number/labels", nil},
-		{"GET", "/repos/:owner/:repo/milestones", nil},
-		{"GET", "/repos/:owner/:repo/milestones/:number", nil},
-		{"POST", "/repos/:owner/:repo/milestones", nil},
-		{"PATCH", "/repos/:owner/:repo/milestones/:number", nil},
-		{"DELETE", "/repos/:owner/:repo/milestones/:number", nil},
-
-		// Miscellaneous
-		{"GET", "/emojis", nil},
-		{"GET", "/gitignore/templates", nil},
-		{"GET", "/gitignore/templates/:name", nil},
-		{"POST", "/markdown", nil},
-		{"POST", "/markdown/raw", nil},
-		{"GET", "/meta", nil},
-		{"GET", "/rate_limit", nil},
-
-		// Organizations
-		{"GET", "/users/:user/orgs", nil},
-		{"GET", "/user/orgs", nil},
-		{"GET", "/orgs/:org", nil},
-		{"PATCH", "/orgs/:org", nil},
-		{"GET", "/orgs/:org/members", nil},
-		{"GET", "/orgs/:org/members/:user", nil},
-		{"DELETE", "/orgs/:org/members/:user", nil},
-		{"GET", "/orgs/:org/public_members", nil},
-		{"GET", "/orgs/:org/public_members/:user", nil},
-		{"PUT", "/orgs/:org/public_members/:user", nil},
-		{"DELETE", "/orgs/:org/public_members/:user", nil},
-		{"GET", "/orgs/:org/teams", nil},
-		{"GET", "/teams/:id", nil},
-		{"POST", "/orgs/:org/teams", nil},
-		{"PATCH", "/teams/:id", nil},
-		{"DELETE", "/teams/:id", nil},
-		{"GET", "/teams/:id/members", nil},
-		{"GET", "/teams/:id/members/:user", nil},
-		{"PUT", "/teams/:id/members/:user", nil},
-		{"DELETE", "/teams/:id/members/:user", nil},
-		{"GET", "/teams/:id/repos", nil},
-		{"GET", "/teams/:id/repos/:owner/:repo", nil},
-		{"PUT", "/teams/:id/repos/:owner/:repo", nil},
-		{"DELETE", "/teams/:id/repos/:owner/:repo", nil},
-		{"GET", "/user/teams", nil},
-
-		// Pull Requests
-		{"GET", "/repos/:owner/:repo/pulls", nil},
-		{"GET", "/repos/:owner/:repo/pulls/:number", nil},
-		{"POST", "/repos/:owner/:repo/pulls", nil},
-		{"PATCH", "/repos/:owner/:repo/pulls/:number", nil},
-		{"GET", "/repos/:owner/:repo/pulls/:number/commits", nil},
-		{"GET", "/repos/:owner/:repo/pulls/:number/files", nil},
-		{"GET", "/repos/:owner/:repo/pulls/:number/merge", nil},
-		{"PUT", "/repos/:owner/:repo/pulls/:number/merge", nil},
-		{"GET", "/repos/:owner/:repo/pulls/:number/comments", nil},
-		{"GET", "/repos/:owner/:repo/pulls/comments", nil},
-		{"GET", "/repos/:owner/:repo/pulls/comments/:number", nil},
-		{"PUT", "/repos/:owner/:repo/pulls/:number/comments", nil},
-		{"PATCH", "/repos/:owner/:repo/pulls/comments/:number", nil},
-		{"DELETE", "/repos/:owner/:repo/pulls/comments/:number", nil},
-
-		// Repositories
-		{"GET", "/user/repos", nil},
-		{"GET", "/users/:user/repos", nil},
-		{"GET", "/orgs/:org/repos", nil},
-		{"GET", "/repositories", nil},
-		{"POST", "/user/repos", nil},
-		{"POST", "/orgs/:org/repos", nil},
-		{"GET", "/repos/:owner/:repo", nil},
-		{"PATCH", "/repos/:owner/:repo", nil},
-		{"GET", "/repos/:owner/:repo/contributors", nil},
-		{"GET", "/repos/:owner/:repo/languages", nil},
-		{"GET", "/repos/:owner/:repo/teams", nil},
-		{"GET", "/repos/:owner/:repo/tags", nil},
-		{"GET", "/repos/:owner/:repo/branches", nil},
-		{"GET", "/repos/:owner/:repo/branches/:branch", nil},
-		{"DELETE", "/repos/:owner/:repo", nil},
-		{"GET", "/repos/:owner/:repo/collaborators", nil},
-		{"GET", "/repos/:owner/:repo/collaborators/:user", nil},
-		{"PUT", "/repos/:owner/:repo/collaborators/:user", nil},
-		{"DELETE", "/repos/:owner/:repo/collaborators/:user", nil},
-		{"GET", "/repos/:owner/:repo/comments", nil},
-		{"GET", "/repos/:owner/:repo/commits/:sha/comments", nil},
-		{"POST", "/repos/:owner/:repo/commits/:sha/comments", nil},
-		{"GET", "/repos/:owner/:repo/comments/:id", nil},
-		{"PATCH", "/repos/:owner/:repo/comments/:id", nil},
-		{"DELETE", "/repos/:owner/:repo/comments/:id", nil},
-		{"GET", "/repos/:owner/:repo/commits", nil},
-		{"GET", "/repos/:owner/:repo/commits/:sha", nil},
-		{"GET", "/repos/:owner/:repo/readme", nil},
-		{"GET", "/repos/:owner/:repo/contents/*path", nil},
-		{"PUT", "/repos/:owner/:repo/contents/*path", nil},
-		{"DELETE", "/repos/:owner/:repo/contents/*path", nil},
-		{"GET", "/repos/:owner/:repo/:archive_format/:ref", nil},
-		{"GET", "/repos/:owner/:repo/keys", nil},
-		{"GET", "/repos/:owner/:repo/keys/:id", nil},
-		{"POST", "/repos/:owner/:repo/keys", nil},
-		{"PATCH", "/repos/:owner/:repo/keys/:id", nil},
-		{"DELETE", "/repos/:owner/:repo/keys/:id", nil},
-		{"GET", "/repos/:owner/:repo/downloads", nil},
-		{"GET", "/repos/:owner/:repo/downloads/:id", nil},
-		{"DELETE", "/repos/:owner/:repo/downloads/:id", nil},
-		{"GET", "/repos/:owner/:repo/forks", nil},
-		{"POST", "/repos/:owner/:repo/forks", nil},
-		{"GET", "/repos/:owner/:repo/hooks", nil},
-		{"GET", "/repos/:owner/:repo/hooks/:id", nil},
-		{"POST", "/repos/:owner/:repo/hooks", nil},
-		{"PATCH", "/repos/:owner/:repo/hooks/:id", nil},
-		{"POST", "/repos/:owner/:repo/hooks/:id/tests", nil},
-		{"DELETE", "/repos/:owner/:repo/hooks/:id", nil},
-		{"POST", "/repos/:owner/:repo/merges", nil},
-		{"GET", "/repos/:owner/:repo/releases", nil},
-		{"GET", "/repos/:owner/:repo/releases/:id", nil},
-		{"POST", "/repos/:owner/:repo/releases", nil},
-		{"PATCH", "/repos/:owner/:repo/releases/:id", nil},
-		{"DELETE", "/repos/:owner/:repo/releases/:id", nil},
-		{"GET", "/repos/:owner/:repo/releases/:id/assets", nil},
-		{"GET", "/repos/:owner/:repo/stats/contributors", nil},
-		{"GET", "/repos/:owner/:repo/stats/commit_activity", nil},
-		{"GET", "/repos/:owner/:repo/stats/code_frequency", nil},
-		{"GET", "/repos/:owner/:repo/stats/participation", nil},
-		{"GET", "/repos/:owner/:repo/stats/punch_card", nil},
-		{"GET", "/repos/:owner/:repo/statuses/:ref", nil},
-		{"POST", "/repos/:owner/:repo/statuses/:ref", nil},
-
-		// Search
-		{"GET", "/search/repositories", nil},
-		{"GET", "/search/code", nil},
-		{"GET", "/search/issues", nil},
-		{"GET", "/search/users", nil},
-		{"GET", "/legacy/issues/search/:owner/:repository/:state/:keyword", nil},
-		{"GET", "/legacy/repos/search/:keyword", nil},
-		{"GET", "/legacy/user/search/:keyword", nil},
-		{"GET", "/legacy/user/email/:email", nil},
-
-		// Users
-		{"GET", "/users/:user", nil},
-		{"GET", "/user", nil},
-		{"PATCH", "/user", nil},
-		{"GET", "/users", nil},
-		{"GET", "/user/emails", nil},
-		{"POST", "/user/emails", nil},
-		{"DELETE", "/user/emails", nil},
-		{"GET", "/users/:user/followers", nil},
-		{"GET", "/user/followers", nil},
-		{"GET", "/users/:user/following", nil},
-		{"GET", "/user/following", nil},
-		{"GET", "/user/following/:user", nil},
-		{"GET", "/users/:user/following/:target_user", nil},
-		{"PUT", "/user/following/:user", nil},
-		{"DELETE", "/user/following/:user", nil},
-		{"GET", "/users/:user/keys", nil},
-		{"GET", "/user/keys", nil},
-		{"GET", "/user/keys/:id", nil},
-		{"POST", "/user/keys", nil},
-		{"PATCH", "/user/keys/:id", nil},
-		{"DELETE", "/user/keys/:id", nil},
-	}
+	"time"
 )
 
 func TestRouterParam(t *testing.T) {
@@ -618,5 +351,354 @@ func TestRouter_UpdateRoute(t *testing.T) {
 
 	if w.Body.String() != "hello world" {
 		t.Errorf("%s: expected 'hello world' got %s", t.Name(), w.Body.String())
+	}
+}
+
+
+// Benchmarks
+type TestRoutes struct {
+	method  string
+	path    string
+	handler http.HandlerFunc
+}
+
+var (
+	api = []TestRoutes{
+		// OAuth Authorizations
+		{"GET", "/authorizations", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/authorizations/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/authorizations", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PUT", "/authorizations/clients/:client_id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PATCH", "/authorizations/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/authorizations/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/applications/:client_id/tokens/:access_token", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/applications/:client_id/tokens", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/applications/:client_id/tokens/:access_token", func(writer http.ResponseWriter, request *http.Request) {}},
+
+		// Activity
+		{"GET", "/events", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/events", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/networks/:owner/:repo/events", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/orgs/:org/events", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/users/:user/received_events", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/users/:user/received_events/public", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/users/:user/events", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/users/:user/events/public", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/users/:user/events/orgs/:org", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/feeds", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/notifications", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/notifications", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PUT", "/notifications", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PUT", "/repos/:owner/:repo/notifications", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/notifications/threads/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PATCH", "/notifications/threads/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/notifications/threads/:id/subscription", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PUT", "/notifications/threads/:id/subscription", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/notifications/threads/:id/subscription", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/stargazers", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/users/:user/starred", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/user/starred", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/user/starred/:owner/:repo", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PUT", "/user/starred/:owner/:repo", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/user/starred/:owner/:repo", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/subscribers", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/users/:user/subscriptions", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/user/subscriptions", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/subscription", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PUT", "/repos/:owner/:repo/subscription", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/repos/:owner/:repo/subscription", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/user/subscriptions/:owner/:repo", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PUT", "/user/subscriptions/:owner/:repo", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/user/subscriptions/:owner/:repo", func(writer http.ResponseWriter, request *http.Request) {}},
+
+		// Gists
+		{"GET", "/users/:user/gists", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/gists", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/gists/public", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/gists/starred", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/gists/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/gists", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PATCH", "/gists/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PUT", "/gists/:id/star", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/gists/:id/star", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/gists/:id/star", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/gists/:id/forks", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/gists/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+
+		// Git Data
+		{"GET", "/repos/:owner/:repo/git/blobs/:sha", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/repos/:owner/:repo/git/blobs", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/git/commits/:sha", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/repos/:owner/:repo/git/commits", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/git/refs/*ref", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/git/refs", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/repos/:owner/:repo/git/refs", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PATCH", "/repos/:owner/:repo/git/refs/*ref", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/repos/:owner/:repo/git/refs/*ref", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/git/tags/:sha", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/repos/:owner/:repo/git/tags", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/git/trees/:sha", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/repos/:owner/:repo/git/trees", func(writer http.ResponseWriter, request *http.Request) {}},
+
+		// Issues
+		{"GET", "/issues", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/user/issues", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/orgs/:org/issues", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/issues", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/issues/:number", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/repos/:owner/:repo/issues", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PATCH", "/repos/:owner/:repo/issues/:number", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/assignees", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/assignees/:assignee", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/issues/:number/comments", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/issues/comments", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/issues/comments/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/repos/:owner/:repo/issues/:number/comments", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PATCH", "/repos/:owner/:repo/issues/comments/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/repos/:owner/:repo/issues/comments/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/issues/:number/events", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/issues/events", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/issues/events/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/labels", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/labels/:name", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/repos/:owner/:repo/labels", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PATCH", "/repos/:owner/:repo/labels/:name", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/repos/:owner/:repo/labels/:name", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/issues/:number/labels", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/repos/:owner/:repo/issues/:number/labels", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/repos/:owner/:repo/issues/:number/labels/:name", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PUT", "/repos/:owner/:repo/issues/:number/labels", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/repos/:owner/:repo/issues/:number/labels", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/milestones/:number/labels", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/milestones", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/milestones/:number", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/repos/:owner/:repo/milestones", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PATCH", "/repos/:owner/:repo/milestones/:number", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/repos/:owner/:repo/milestones/:number", func(writer http.ResponseWriter, request *http.Request) {}},
+
+		// Miscellaneous
+		{"GET", "/emojis", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/gitignore/templates", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/gitignore/templates/:name", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/markdown", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/markdown/raw", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/meta", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/rate_limit", func(writer http.ResponseWriter, request *http.Request) {}},
+
+		// Organizations
+		{"GET", "/users/:user/orgs", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/user/orgs", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/orgs/:org", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PATCH", "/orgs/:org", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/orgs/:org/members", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/orgs/:org/members/:user", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/orgs/:org/members/:user", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/orgs/:org/public_members", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/orgs/:org/public_members/:user", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PUT", "/orgs/:org/public_members/:user", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/orgs/:org/public_members/:user", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/orgs/:org/teams", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/teams/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/orgs/:org/teams", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PATCH", "/teams/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/teams/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/teams/:id/members", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/teams/:id/members/:user", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PUT", "/teams/:id/members/:user", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/teams/:id/members/:user", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/teams/:id/repos", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/teams/:id/repos/:owner/:repo", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PUT", "/teams/:id/repos/:owner/:repo", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/teams/:id/repos/:owner/:repo", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/user/teams", func(writer http.ResponseWriter, request *http.Request) {}},
+
+		// Pull Requests
+		{"GET", "/repos/:owner/:repo/pulls", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/pulls/:number", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/repos/:owner/:repo/pulls", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PATCH", "/repos/:owner/:repo/pulls/:number", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/pulls/:number/commits", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/pulls/:number/files", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/pulls/:number/merge", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PUT", "/repos/:owner/:repo/pulls/:number/merge", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/pulls/:number/comments", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/pulls/comments", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/pulls/comments/:number", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PUT", "/repos/:owner/:repo/pulls/:number/comments", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PATCH", "/repos/:owner/:repo/pulls/comments/:number", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/repos/:owner/:repo/pulls/comments/:number", func(writer http.ResponseWriter, request *http.Request) {}},
+
+		// Repositories
+		{"GET", "/user/repos", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/users/:user/repos", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/orgs/:org/repos", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repositories", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/user/repos", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/orgs/:org/repos", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PATCH", "/repos/:owner/:repo", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/contributors", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/languages", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/teams", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/tags", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/branches", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/branches/:branch", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/repos/:owner/:repo", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/collaborators", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/collaborators/:user", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PUT", "/repos/:owner/:repo/collaborators/:user", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/repos/:owner/:repo/collaborators/:user", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/comments", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/commits/:sha/comments", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/repos/:owner/:repo/commits/:sha/comments", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/comments/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PATCH", "/repos/:owner/:repo/comments/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/repos/:owner/:repo/comments/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/commits", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/commits/:sha", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/readme", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/contents/*path", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PUT", "/repos/:owner/:repo/contents/*path", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/repos/:owner/:repo/contents/*path", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/:archive_format/:ref", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/keys", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/keys/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/repos/:owner/:repo/keys", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PATCH", "/repos/:owner/:repo/keys/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/repos/:owner/:repo/keys/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/downloads", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/downloads/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/repos/:owner/:repo/downloads/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/forks", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/repos/:owner/:repo/forks", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/hooks", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/hooks/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/repos/:owner/:repo/hooks", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PATCH", "/repos/:owner/:repo/hooks/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/repos/:owner/:repo/hooks/:id/tests", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/repos/:owner/:repo/hooks/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/repos/:owner/:repo/merges", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/releases", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/releases/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/repos/:owner/:repo/releases", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PATCH", "/repos/:owner/:repo/releases/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/repos/:owner/:repo/releases/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/releases/:id/assets", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/stats/contributors", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/stats/commit_activity", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/stats/code_frequency", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/stats/participation", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/stats/punch_card", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/repos/:owner/:repo/statuses/:ref", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/repos/:owner/:repo/statuses/:ref", func(writer http.ResponseWriter, request *http.Request) {}},
+
+		// Search
+		{"GET", "/search/repositories", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/search/code", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/search/issues", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/search/users", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/legacy/issues/search/:owner/:repository/:state/:keyword", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/legacy/repos/search/:keyword", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/legacy/user/search/:keyword", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/legacy/user/email/:email", func(writer http.ResponseWriter, request *http.Request) {}},
+
+		// Users
+		{"GET", "/users/:user", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/user", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PATCH", "/user", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/users", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/user/emails", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/user/emails", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/user/emails", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/users/:user/followers", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/user/followers", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/users/:user/following", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/user/following", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/user/following/:user", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/users/:user/following/:target_user", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PUT", "/user/following/:user", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/user/following/:user", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/users/:user/keys", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/user/keys", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"GET", "/user/keys/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"POST", "/user/keys", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"PATCH", "/user/keys/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+		{"DELETE", "/user/keys/:id", func(writer http.ResponseWriter, request *http.Request) {}},
+	}
+)
+
+func Benchmark_AddRoute(b *testing.B) {
+	b.StopTimer()
+	b.ReportAllocs()
+
+	b.StartTimer()
+
+	for _, testCase := range api {
+		r := New(false, nil, nil)
+
+		switch testCase.method {
+		case http.MethodGet:
+			r.Get(testCase.path, testCase.handler)
+		case http.MethodPost:
+			r.Post(testCase.path, testCase.handler)
+		case http.MethodConnect:
+			r.Connect(testCase.path, testCase.handler)
+		case http.MethodDelete:
+			r.Delete(testCase.path, testCase.handler)
+		case http.MethodPatch:
+			r.Patch(testCase.path, testCase.handler)
+		case http.MethodPut:
+			r.Put(testCase.path, testCase.handler)
+		case http.MethodTrace:
+			r.Trace(testCase.path, testCase.handler)
+		case http.MethodHead:
+			r.Head(testCase.path, testCase.handler)
+		case http.MethodOptions:
+			r.Options(testCase.path, testCase.handler)
+		}
+	}
+}
+
+func Benchmark_GetRoute(b *testing.B) {
+	b.StopTimer()
+	b.ReportAllocs()
+
+	r := New(false, nil, nil)
+
+	for _, testCase := range api {
+		switch testCase.method {
+		case http.MethodGet:
+			r.Get(testCase.path, testCase.handler)
+		case http.MethodPost:
+			r.Post(testCase.path, testCase.handler)
+		case http.MethodConnect:
+			r.Connect(testCase.path, testCase.handler)
+		case http.MethodDelete:
+			r.Delete(testCase.path, testCase.handler)
+		case http.MethodPatch:
+			r.Patch(testCase.path, testCase.handler)
+		case http.MethodPut:
+			r.Put(testCase.path, testCase.handler)
+		case http.MethodTrace:
+			r.Trace(testCase.path, testCase.handler)
+		case http.MethodHead:
+			r.Head(testCase.path, testCase.handler)
+		case http.MethodOptions:
+			r.Options(testCase.path, testCase.handler)
+		}
+	}
+
+	params := url.Values{}
+
+	rand.Seed(time.Now().UnixNano())
+	min := 0
+	max := len(api) - 1
+
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+
+		randomIdx := rand.Intn(max - min + 1) + min
+
+		r.tree.traverse(strings.Split(api[randomIdx].path, "/"), params)
 	}
 }
