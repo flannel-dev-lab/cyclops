@@ -59,6 +59,3 @@ func Bye(w http.ResponseWriter, r *http.Request) {
 	response.SuccessResponse(200, w, nil)
 }
 ```
-
-## Credits
-- Router implementation is inspired and modified accordingly from [vestigo](https://github.com/husobee/vestigo)
