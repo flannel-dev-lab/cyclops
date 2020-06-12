@@ -12,7 +12,7 @@ func TestGet(t *testing.T) {
 		fmt.Fprint(w, "Root!\n")
 	}))
 
-	response, err := Get(testServer.URL, map[string]string{"Content-Type": "application/json"}, map[string]string{"test": "test"})
+	response, err := Get(testServer.URL, map[string]string{"Content-Type": "application/json"}, map[string][]string{"test": {"test"}})
 	if err != nil {
 		t.Error(err)
 	}
@@ -27,7 +27,7 @@ func TestPost(t *testing.T) {
 		fmt.Fprint(w, "Root!\n")
 	}))
 
-	response, err := Post(testServer.URL, map[string]string{"Content-Type": "application/json"}, map[string]string{"test": "test"}, nil)
+	response, err := Post(testServer.URL, map[string]string{"Content-Type": "application/json"}, map[string][]string{"test": {"test"}}, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -39,10 +39,11 @@ func TestPost(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(r.URL.Query())
 		fmt.Fprint(w, "Root!\n")
 	}))
 
-	response, err := Delete(testServer.URL, map[string]string{"Content-Type": "application/json"}, map[string]string{"test": "test"}, nil)
+	response, err := Delete(testServer.URL, map[string]string{"Content-Type": "application/json"}, map[string][]string{"test": {"test"}}, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -57,7 +58,7 @@ func TestPut(t *testing.T) {
 		fmt.Fprint(w, "Root!\n")
 	}))
 
-	response, err := Put(testServer.URL, map[string]string{"Content-Type": "application/json"}, map[string]string{"test": "test"}, nil)
+	response, err := Put(testServer.URL, map[string]string{"Content-Type": "application/json"}, map[string][]string{"test": {"test"}}, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -72,7 +73,7 @@ func TestPatch(t *testing.T) {
 		fmt.Fprint(w, "Root!\n")
 	}))
 
-	response, err := Patch(testServer.URL, map[string]string{"Content-Type": "application/json"}, map[string]string{"test": "test"}, nil)
+	response, err := Patch(testServer.URL, map[string]string{"Content-Type": "application/json"}, map[string][]string{"test": {"test"}}, nil)
 	if err != nil {
 		t.Error(err)
 	}
