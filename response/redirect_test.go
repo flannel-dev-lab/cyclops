@@ -2,7 +2,6 @@ package response
 
 import (
 	"fmt"
-	"github.com/flannel-dev-lab/cyclops/requester"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -19,7 +18,17 @@ func TestRedirect(t *testing.T) {
 		return
 	}))
 
-	response, err := requester.Get(testServer.URL, map[string]string{"Content-Type": "application/json"}, map[string]string{"test": "test"})
+	request, err := http.NewRequest(http.MethodGet, testServer.URL, nil)
+	if err != nil {
+		t.Error(err)
+	}
+
+	request.Header.Set("Content-Type", "application/json")
+
+	request.URL.Query().Set("test", "test")
+
+	client := &http.Client{}
+	response, err := client.Do(request)
 	if err != nil {
 		t.Error(err)
 	}

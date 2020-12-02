@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/gomodule/redigo/redis"
+	"log"
 	"time"
 )
 
@@ -23,7 +24,12 @@ func (redisSessionStore *RedisSessionStore) New(network, address string) error {
 	}
 
 	conn := redisSessionStore.Pool.Get()
-	defer conn.Close()
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}()
 
 	ping, err := redis.String(conn.Do("PING"))
 	if err != nil {
@@ -39,7 +45,12 @@ func (redisSessionStore *RedisSessionStore) New(network, address string) error {
 
 func (redisSessionStore *RedisSessionStore) Save(key string, value map[string]interface{}, expiry time.Duration) (err error) {
 	conn := redisSessionStore.Pool.Get()
-	defer conn.Close()
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}()
 
 	data, err := json.Marshal(value)
 	if err != nil {
@@ -57,7 +68,12 @@ func (redisSessionStore *RedisSessionStore) Save(key string, value map[string]in
 
 func (redisSessionStore *RedisSessionStore) Get(key string) (data map[string]interface{}, err error) {
 	conn := redisSessionStore.Pool.Get()
-	defer conn.Close()
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}()
 
 	s, err := redis.String(conn.Do("GET", key))
 	if err != nil {
@@ -72,7 +88,12 @@ func (redisSessionStore *RedisSessionStore) Get(key string) (data map[string]int
 
 func (redisSessionStore *RedisSessionStore) Delete(key string) error {
 	conn := redisSessionStore.Pool.Get()
-	defer conn.Close()
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}()
 
 	_, err := conn.Do("DEL", key)
 	return err
@@ -80,7 +101,12 @@ func (redisSessionStore *RedisSessionStore) Delete(key string) error {
 
 func (redisSessionStore *RedisSessionStore) Reset() error {
 	conn := redisSessionStore.Pool.Get()
-	defer conn.Close()
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}()
 
 	_, err := conn.Do("FLUSHDB")
 	return err
