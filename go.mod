@@ -1,6 +1,6 @@
 module github.com/flannel-dev-lab/cyclops
 
-go 1.14
+go 1.15
 
 require (
 	github.com/certifi/gocertifi v0.0.0-20190506164543-d2eda7129713 // indirect
