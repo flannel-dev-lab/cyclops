@@ -3,7 +3,7 @@ package middleware
 import (
 	"encoding/json"
 	"errors"
-	"log"
+	"github.com/flannel-dev-lab/cyclops/logger"
 	"net/http"
 	"runtime/debug"
 )
@@ -12,6 +12,8 @@ import (
 // that the server does not stop
 func PanicHandler(h http.HandlerFunc) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
+		ctx := request.Context()
+
 		var err error
 		defer func() {
 			r := recover()
@@ -25,8 +27,10 @@ func PanicHandler(h http.HandlerFunc) http.HandlerFunc {
 				default:
 					err = errors.New("unknown error")
 				}
-				log.Print(string(debug.Stack()))
-				log.Println(err.Error())
+
+				ctx = logger.AddKey(ctx, "stack-trace", string(debug.Stack()))
+				ctx = logger.AddKey(ctx, "err", err.Error())
+
 
 				errData, _ := json.Marshal(map[string]string{"error": err.Error()})
 

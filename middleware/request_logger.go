@@ -1,60 +1,77 @@
 package middleware
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
+	"github.com/flannel-dev-lab/cyclops/logger"
+	"github.com/google/uuid"
 	"net/http"
 	"time"
 )
 
-// LogObject contains keys for the logs
-type LogObject struct {
-	// Current timestamp of request
-	Timestamp string `json:"timestamp"`
-	// RemoteAddress contains the IP of the server/ the IP address of the proxy
-	RemoteAddress string `json:"remote_address"`
-	// TrueIP contains the IP of the original requester
-	TrueIP string `json:"true_ip"`
-	// Method contains the http method requested
-	Method string `json:"method"`
-	// Path contains the http path requested
-	Path string `json:"path"`
-	// Host contains the IP of host
-	Host string `json:"host"`
-	// Protocol contains http version
-	Protocol string `json:"protocol"`
-	// UserAgent
-	UserAgent string `json:"user_agent"`
+// loggingResponseWriter is a custom implementation of http.ResponseWriter to log status code
+type loggingResponseWriter struct {
+	http.ResponseWriter
+	statusCode int
+	message    string
 }
 
-// logWriter struct that implements Write for logger
-type logWriter struct {
+// NewLoggingResponseWriter Creates a reference loggingResponseWriter
+func NewLoggingResponseWriter(w http.ResponseWriter) *loggingResponseWriter {
+	return &loggingResponseWriter{w, http.StatusOK, ""}
 }
 
-// Write prints logs to stdout in JSON
-func (writer logWriter) Write(bytes []byte) (int, error) {
-	return fmt.Printf("%s", string(bytes))
+// WriteHeader takes in a http status code and adds to loggingResponseWriter
+func (lrw *loggingResponseWriter) WriteHeader(code int) {
+	lrw.statusCode = code
+	lrw.ResponseWriter.WriteHeader(code)
 }
 
-// RequestLogger intercepts logs from the requests and prints them to stdout
-func RequestLogger(h http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, request *http.Request) {
-		logObject := LogObject{
-			Timestamp:     time.Now().UTC().Format("2006-01-02T15:04:05.999Z"),
-			RemoteAddress: request.RemoteAddr,
-			Method:        request.Method,
-			Path:          request.URL.Path,
-			Host:          request.Host,
-			Protocol:      request.Proto,
-			UserAgent:     request.Header.Get(http.CanonicalHeaderKey("user-agent")),
+// Header maps to the http.ResponseWriter's Header() method
+func (lrw *loggingResponseWriter) Header() http.Header {
+	return lrw.ResponseWriter.Header()
+}
+
+// Write takes in a byte array and writes to response writer
+func (lrw *loggingResponseWriter) Write(data []byte) (int, error) {
+	lrw.message = string(data)
+	return lrw.ResponseWriter.Write(data)
+}
+
+// accessLogger is used to log access logs for discover service
+func accessLogger(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		ctx := r.Context()
+		ctx = logger.AddKey(ctx, "timestamp", time.Now().UTC().Format(time.RFC3339))
+		ctx = logger.AddKey(ctx, "remote_address", r.RemoteAddr)
+		ctx = logger.AddKey(ctx, "method", r.Method)
+		ctx = logger.AddKey(ctx, "protocol", r.Proto)
+		ctx = logger.AddKey(ctx, "path", r.URL.Path)
+
+		u, err := uuid.NewUUID()
+		if err != nil {
+			logger.Error(ctx, "could not generate request-id", err)
+		} else {
+			ctx = logger.AddKey(ctx, "api-request-id", u.String())
 		}
-		log.SetFlags(0)
-		log.SetOutput(new(logWriter))
 
-		logData, _ := json.Marshal(logObject)
+		startTime := time.Now().UTC()
 
-		defer log.Println(fmt.Sprintf("%s", logData))
-		h.ServeHTTP(w, request)
-	}
+		r = r.WithContext(ctx)
+
+		lrw := NewLoggingResponseWriter(w)
+
+		h.ServeHTTP(lrw, r)
+
+		ctx = logger.AddKey(ctx, "status_code", fmt.Sprintf("%d", lrw.statusCode))
+		ctx = logger.AddKey(ctx, "duration", fmt.Sprintf("%d", time.Since(startTime).Milliseconds()))
+
+		if lrw.statusCode >= 200 && lrw.statusCode <= 399 {
+			logger.Info(ctx, "access_log")
+		} else {
+			logger.Error(ctx, lrw.message, errors.New(lrw.message))
+		}
+
+	})
 }

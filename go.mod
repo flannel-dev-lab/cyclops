@@ -1,4 +1,4 @@
-module github.com/flannel-dev-lab/cyclops
+module github.com/flannel-dev-lab/cyclops/v2
 
 go 1.15
 
