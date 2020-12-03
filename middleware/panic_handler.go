@@ -3,9 +3,10 @@ package middleware
 import (
 	"encoding/json"
 	"errors"
-	"github.com/flannel-dev-lab/cyclops/logger"
 	"net/http"
 	"runtime/debug"
+
+	"github.com/flannel-dev-lab/cyclops/v2/logger"
 )
 
 // PanicHandler takes care of recovering from panic if any unforseen error occurs in the execution logic and makes sure

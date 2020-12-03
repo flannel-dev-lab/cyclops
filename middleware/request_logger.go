@@ -3,7 +3,7 @@ package middleware
 import (
 	"errors"
 	"fmt"
-	"github.com/flannel-dev-lab/cyclops/logger"
+	"github.com/flannel-dev-lab/cyclops/v2/logger"
 	"github.com/google/uuid"
 	"net/http"
 	"time"
@@ -39,8 +39,8 @@ func (lrw *loggingResponseWriter) Write(data []byte) (int, error) {
 }
 
 // accessLogger is used to log access logs for discover service
-func accessLogger(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func AccessLogger(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
 		ctx := r.Context()
 		ctx = logger.AddKey(ctx, "timestamp", time.Now().UTC().Format(time.RFC3339))
@@ -73,5 +73,5 @@ func accessLogger(h http.Handler) http.Handler {
 			logger.Error(ctx, lrw.message, errors.New(lrw.message))
 		}
 
-	})
+	}
 }
