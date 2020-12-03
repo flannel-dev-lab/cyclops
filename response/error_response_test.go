@@ -2,8 +2,6 @@ package response
 
 import (
 	"errors"
-	"github.com/flannel-dev-lab/cyclops/alerts"
-	"github.com/flannel-dev-lab/cyclops/requester"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -15,13 +13,21 @@ func TestErrorResponse(t *testing.T) {
 			http.StatusBadRequest,
 			errors.New("test error"),
 			"test error",
-			w,
-			false,
-			nil)
+			w)
 		return
 	}))
 
-	response, err := requester.Get(testServer.URL, map[string]string{"Content-Type": "application/json"}, map[string]string{"test": "test"})
+	request, err := http.NewRequest(http.MethodGet, testServer.URL, nil)
+	if err != nil {
+		t.Error(err)
+	}
+
+	request.Header.Set("Content-Type", "application/json")
+
+	request.URL.Query().Set("test", "test")
+
+	client := &http.Client{}
+	response, err := client.Do(request)
 	if err != nil {
 		t.Error(err)
 	}
@@ -41,21 +47,26 @@ func (m MockAlert) Bootstrap() error {
 func (m MockAlert) CaptureError(err error, message string) {}
 
 func TestErrorResponse_SendAlert(t *testing.T) {
-	var alert alerts.Alert
-	alert = MockAlert{}
-
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ErrorResponse(
 			http.StatusBadRequest,
 			errors.New("test error"),
 			"test error",
-			w,
-			true,
-			alert)
+			w)
 		return
 	}))
 
-	response, err := requester.Get(testServer.URL, map[string]string{"Content-Type": "application/json"}, map[string]string{"test": "test"})
+	request, err := http.NewRequest(http.MethodGet, testServer.URL, nil)
+	if err != nil {
+		t.Error(err)
+	}
+
+	request.Header.Set("Content-Type", "application/json")
+
+	request.URL.Query().Set("test", "test")
+
+	client := &http.Client{}
+	response, err := client.Do(request)
 	if err != nil {
 		t.Error(err)
 	}
