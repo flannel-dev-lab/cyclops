@@ -1,7 +1,7 @@
 package sessions
 
 import (
-	"github.com/flannel-dev-lab/cyclops/cookie"
+	"github.com/flannel-dev-lab/cyclops/v2/cookie"
 	"github.com/google/uuid"
 	"net/http"
 	"time"

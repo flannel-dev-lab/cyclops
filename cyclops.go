@@ -3,7 +3,7 @@ package cyclops
 
 import (
 	"fmt"
-	"github.com/flannel-dev-lab/cyclops/input"
+	"github.com/flannel-dev-lab/cyclops/v2/input"
 	"log"
 	"net/http"
 )

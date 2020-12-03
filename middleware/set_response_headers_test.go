@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"fmt"
-	"github.com/flannel-dev-lab/cyclops/router"
+	"github.com/flannel-dev-lab/cyclops/v2/router"
 	"net/http"
 	"net/http/httptest"
 	"testing"

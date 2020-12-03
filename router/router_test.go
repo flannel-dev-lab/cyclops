@@ -2,7 +2,7 @@ package router
 
 import (
 	"fmt"
-	"github.com/flannel-dev-lab/cyclops"
+	"github.com/flannel-dev-lab/cyclops/v2"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
