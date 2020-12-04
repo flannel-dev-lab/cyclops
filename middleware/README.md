@@ -19,9 +19,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/flannel-dev-lab/cyclops"
-	"github.com/flannel-dev-lab/cyclops/middleware"
-	"github.com/flannel-dev-lab/cyclops/router"
+	"github.com/flannel-dev-lab/cyclops/v2"
+	"github.com/flannel-dev-lab/cyclops/v2/middleware"
+	"github.com/flannel-dev-lab/cyclops/v2/router"
 	"html/template"
 	"net/http"
 	"time"
@@ -56,10 +56,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/flannel-dev-lab/cyclops"
-	"github.com/flannel-dev-lab/cyclops/middleware"
-	"github.com/flannel-dev-lab/cyclops/response"
-	"github.com/flannel-dev-lab/cyclops/router"
+	"github.com/flannel-dev-lab/cyclops/v2/"
+	"github.com/flannel-dev-lab/cyclops/v2/middleware"
+	"github.com/flannel-dev-lab/cyclops/v2/response"
+	"github.com/flannel-dev-lab/cyclops/v2/router"
 	"net/http"
 )
 

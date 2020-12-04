@@ -17,7 +17,7 @@
 
 ## Creating a Cookie:
 ```
-import "github.com/flannel-dev-lab/cyclops/cookie"
+import "github.com/flannel-dev-lab/cyclops/v2/cookie"
 
 func Login(w http.ResponseWriter, r *http.Request) {
     cookieObj := cookie.CyclopsCookie{
@@ -35,7 +35,7 @@ Once the cookie is created, we use the method `SetCookie` which takes in a `http
 
 ## Reading a cookie:
 ```
-import "github.com/flannel-dev-lab/cyclops/cookie"
+import "github.com/flannel-dev-lab/cyclops/v2/cookie"
 
 func Login(w http.ResponseWriter, r *http.Request) {
     cookieObj := cookie.CyclopsCookie{}
@@ -49,7 +49,7 @@ To read a cookie, we create an empty cookie object and call the `GetCookie` meth
 
 ## Reading all cookies
 ```
-import "github.com/flannel-dev-lab/cyclops/cookie"
+import "github.com/flannel-dev-lab/cyclops/v2/cookie"
 
 func Login(w http.ResponseWriter, r *http.Request) {
     cookieObj := cookie.CyclopsCookie{}
@@ -63,7 +63,7 @@ returns a array  of `*http.Cookie`
 ## Deleting a Cookie
 Deletes a cookie by setting max-age to 0
 ```
-import "github.com/flannel-dev-lab/cyclops/cookie"
+import "github.com/flannel-dev-lab/cyclops/v2/cookie"
 
 func Login(w http.ResponseWriter, r *http.Request) {
     cyclopsCookie := cookie.CyclopsCookie{}
