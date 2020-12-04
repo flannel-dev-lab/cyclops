@@ -9,8 +9,8 @@ is not your thing, you can always implement the methods in the `Store` interface
 package main
 
 import (
-	"github.com/flannel-dev-lab/cyclops/cookie"
-	"github.com/flannel-dev-lab/cyclops/sessions"
+	"github.com/flannel-dev-lab/cyclops/v2/cookie"
+	"github.com/flannel-dev-lab/cyclops/v2/sessions"
 )
 
 func main() {

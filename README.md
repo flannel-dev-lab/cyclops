@@ -6,48 +6,53 @@
 
 ![GitHub Logo1](Gopher-logo.png)
 
+## Download
+```shell
+go get https://github.com/flannel-dev-lab/cyclops/v2
+```
+
 ## Features
 - Plug and Play Middleware support
-- Plug and Play Alerting support
 - Customized response messages
 
 ## Table of contents
-1. [Alerting](alerts/README.md)
-2. [Middleware](middleware/README.md)
-3. [Cookies](cookie/README.md)
-4. [Handling Inputs](input/README.md)
-5. [Handling HTTP Requests](requester/README.md)
-6. [Handling Sessions](sessions/README.md)
+1. [Middleware](middleware/README.md)
+2. [Cookies](cookie/README.md)
+3. [Handling Inputs](input/README.md)
+4. [Handling HTTP Requests](requester/README.md)
+5. [Handling Sessions](sessions/README.md)
+6. [Logging](logger/README.md)
 
 ## Usage
+
 ```go
 package main
 
 import (
 	"fmt"
-	"github.com/flannel-dev-lab/cyclops"
-	"github.com/flannel-dev-lab/cyclops/response"
-	"github.com/flannel-dev-lab/cyclops/router"
-	"github.com/flannel-dev-lab/cyclops/middleware"
+	"github.com/flannel-dev-lab/cyclops/v2"
+	"github.com/flannel-dev-lab/cyclops/v2/middleware"
+	"github.com/flannel-dev-lab/cyclops/v2/response"
+	"github.com/flannel-dev-lab/cyclops/v2/router"
 	"net/http"
 )
 
 func main() {
-    routerObj := router.New(false, nil, nil)
+	routerObj := router.New(false, nil, nil)
 
-    routerObj.Get("/hello", middleware.NewChain().Then(Hello))
-    routerObj.Post("/bye", Bye)
+	routerObj.Get("/hello", middleware.NewChain().Then(Hello))
+	routerObj.Post("/bye", Bye)
 
-    // Named parameters can be used as
-    routerObj.Get("/users/:name", middleware.NewChain().Then(PathParam))
+	// Named parameters can be used as
+	routerObj.Get("/users/:name", middleware.NewChain().Then(PathParam))
 
-    // static can be registered as
-    routerObj.RegisterStatic("{PATH TO STATIC DIRECTORY}", "/static/")
-    cyclops.StartServer(":8080", routerObj)
+	// static can be registered as
+	routerObj.RegisterStatic("{PATH TO STATIC DIRECTORY}", "/static/")
+	cyclops.StartServer(":8080", routerObj)
 }
 
 func PathParam(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintf(w, "Hi %s", cyclops.Param(r, "name"))
+	fmt.Fprintf(w, "Hi %s", cyclops.Param(r, "name"))
 	response.SuccessResponse(200, w, nil)
 }
 
