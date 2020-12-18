@@ -8,7 +8,7 @@
 
 ## Download
 ```shell
-go get https://github.com/flannel-dev-lab/cyclops/v2
+go get github.com/flannel-dev-lab/cyclops/v2
 ```
 
 ## Features
