@@ -25,6 +25,7 @@ type ErrorLogger struct {
 
 // ErrorResponse handles the logging and structuring of sending error to the user
 func ErrorResponse(status int, err error, message string, responseWriter http.ResponseWriter) {
+	responseWriter.Header().Set("Content-Type", "application/json")
 	responseWriter.WriteHeader(status)
 
 	errorLog := ErrorLogger{
