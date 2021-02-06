@@ -1,7 +1,6 @@
 package response
 
 import (
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,7 +10,6 @@ func TestErrorResponse(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ErrorResponse(
 			http.StatusBadRequest,
-			errors.New("test error"),
 			"test error",
 			w)
 		return
@@ -50,7 +48,6 @@ func TestErrorResponse_SendAlert(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ErrorResponse(
 			http.StatusBadRequest,
-			errors.New("test error"),
 			"test error",
 			w)
 		return
