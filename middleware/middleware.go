@@ -9,7 +9,7 @@ import (
 )
 
 // A type signature for middleware
-//type Middlewares func(http.Handler) http.Handler
+// type Middlewares func(http.Handler) http.Handler
 type Middlewares func(http.HandlerFunc) http.HandlerFunc
 
 // Chain contains a slice of middleware for the request

@@ -354,7 +354,6 @@ func TestRouter_UpdateRoute(t *testing.T) {
 	}
 }
 
-
 // Benchmarks
 type TestRoutes struct {
 	method  string
@@ -697,7 +696,7 @@ func Benchmark_GetRoute(b *testing.B) {
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 
-		randomIdx := rand.Intn(max - min + 1) + min
+		randomIdx := rand.Intn(max-min+1) + min
 
 		r.tree.traverse(strings.Split(api[randomIdx].path, "/"), params)
 	}
