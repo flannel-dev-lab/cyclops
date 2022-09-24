@@ -9,7 +9,7 @@ import (
 	"github.com/flannel-dev-lab/cyclops/v2/logger"
 )
 
-// PanicHandler takes care of recovering from panic if any unforseen error occurs in the execution logic and makes sure
+// PanicHandler takes care of recovering from panic if any unforeseen error occurs in the execution logic and makes sure
 // that the server does not stop
 func PanicHandler(h http.HandlerFunc) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
@@ -31,7 +31,6 @@ func PanicHandler(h http.HandlerFunc) http.HandlerFunc {
 
 				ctx = logger.AddKey(ctx, "stack-trace", string(debug.Stack()))
 				ctx = logger.AddKey(ctx, "err", err.Error())
-
 
 				errData, _ := json.Marshal(map[string]string{"error": err.Error()})
 

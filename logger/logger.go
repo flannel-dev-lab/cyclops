@@ -30,7 +30,7 @@ func Info(ctx context.Context, msg string) {
 	manageLog(values)
 }
 
-// Warn Prints out the warn logs
+// Warn Prints out to warn logs
 func Warn(ctx context.Context, msg string, err error) {
 	values := GetAll(ctx)
 	if values == nil {
@@ -93,7 +93,7 @@ func copyMap(from []string) []string {
 }
 
 func getStoredKeys(ctx context.Context) []string {
-	keys := []string{}
+	var keys []string
 
 	if k, ok := ctx.Value("keys").([]string); ok {
 		keys = k

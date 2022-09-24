@@ -38,7 +38,7 @@ func (lrw *loggingResponseWriter) Write(data []byte) (int, error) {
 	return lrw.ResponseWriter.Write(data)
 }
 
-// accessLogger is used to log access logs for discover service
+// AccessLogger is used to log access logs for discover service
 func AccessLogger(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 

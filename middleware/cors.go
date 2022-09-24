@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// Contains all the CORS configurations
+// CORS Contains all the CORS configurations
 type CORS struct {
 	// AllowedOrigin Specifies which origin should be allowed, if you want to allow all use *
 	AllowedOrigin string

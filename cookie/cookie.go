@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	// DefaultExpiry is the default expiry for a cookie if a user does not sets it
+	// DefaultExpiry is the default expiry for a cookie if a user does not set it
 	DefaultExpiry = 3600
 )
 
@@ -37,7 +37,7 @@ type CyclopsCookie struct {
 	MaxAge  int
 }
 
-// SetCookie  is used to sets a cookie to the responseWriter
+// SetCookie  is used to set a cookie to the responseWriter
 func (cyclopsCookie CyclopsCookie) SetCookie(w http.ResponseWriter) {
 	cookie := &http.Cookie{}
 	cookie.Name = cyclopsCookie.Name

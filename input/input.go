@@ -1,4 +1,4 @@
-// input deals with getting the values from form and query parameters
+// Package input deals with getting the values from form and query parameters
 package input
 
 import (

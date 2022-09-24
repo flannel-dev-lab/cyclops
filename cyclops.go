@@ -1,4 +1,4 @@
-// cyclops is a minimal web framework
+// Package cyclops is a minimal web framework
 package cyclops
 
 import (

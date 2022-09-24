@@ -32,7 +32,7 @@ type SecureHeaders struct {
 	// header by setting the `X-Content-Type-Options` header.
 	// Optional. Default value "nosniff".
 	ContentTypeOptions string
-	// Sets X-Frame-Options header that can be used to indicate whether or not a browser should be allowed to render a
+	// Sets X-Frame-Options header that can be used to indicate whether a browser should be allowed to render a
 	// page in a <frame>, <iframe>, <embed> or <object>. Valid values are deny, sameorigin and allow-from uri. Default
 	// is deny
 	FrameOptions string
@@ -41,7 +41,7 @@ type SecureHeaders struct {
 	// be accessed using HTTPS. Default is 0
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
 	// HSTSMaxAge int
-	// When enabled this rule applies to all of the site's subdomains as well to Strict-Transport-Security
+	// When enabled this rule applies to all the site's subdomains as well to Strict-Transport-Security
 	// HSTSIncludeSubdomains bool
 
 	// ReferrerPolicy sets the `Referrer-Policy` header providing security against
